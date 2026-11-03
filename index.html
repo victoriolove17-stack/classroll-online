@@ -93,6 +93,11 @@
     .score-actions {display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0;}
     .score-actions input[type=file] {max-width:100%;font-size:.85rem;}
     .score-edit-row {display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;align-items:center;}
+    .assessment-counts {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0;}
+    .assessment-counts label {display:grid;gap:7px;padding:13px;border:1px solid var(--line);border-radius:13px;background:#f7fbff;}
+    .assessment-counts input {min-width:0;width:100%;padding:10px;border:1px solid #c9d8dd;border-radius:10px;}
+    .assessment-count-actions {display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+    @media(max-width:600px){.assessment-counts{grid-template-columns:1fr;}}
     @media(max-width:650px){.score-form{grid-template-columns:1fr 1fr;}}
   </style>
 </head>
@@ -162,6 +167,19 @@
         <label>Import section scores CSV<input type="file" id="scoresImport" accept=".csv,text/csv"></label>
       </div>
       <div id="scoresFeedback" class="error" role="status" aria-live="polite"></div>
+      <h3>Number of assessments for this section</h3>
+      <p>Set how many Written Works, Performance Tasks, and Tests your learners will take. Changes apply to every student in the section.</p>
+      <form id="assessmentCountsForm">
+        <div class="assessment-counts">
+          <label>Written Works <input id="countWritten" type="number" min="0" max="50" step="1" required></label>
+          <label>Performance Tasks <input id="countPerformance" type="number" min="0" max="50" step="1" required></label>
+          <label>Tests <input id="countTests" type="number" min="0" max="50" step="1" required></label>
+        </div>
+        <div class="assessment-count-actions">
+          <button class="primary" type="submit">Apply assessment counts</button>
+          <small>New assessments start at 20 items; you can edit that total afterward.</small>
+        </div>
+      </form>
       <div id="scoresList" class="score-grid"></div>
       <h3>Add assessment</h3>
       <form id="assessmentForm" class="score-form">
@@ -271,6 +289,7 @@
     scoreEls.dialog.showModal();
   }
   function renderStudentScores(){
+    syncAssessmentCounts();
     const scores=sectionScores();
     if(!scores||!scoreStudentId)return;
     scoreEls.list.replaceChildren();
@@ -326,6 +345,63 @@
       }
     }
   }
+
+  const assessmentCountFields={
+    'Written Work':document.getElementById('countWritten'),
+    'Performance Task':document.getElementById('countPerformance'),
+    'Test':document.getElementById('countTests')
+  };
+  function syncAssessmentCounts(){
+    const scores=sectionScores();
+    if(!scores)return;
+    for(const type of scoreTypes){
+      assessmentCountFields[type].value=scores.assessments.filter(a=>a.type===type).length;
+    }
+  }
+  document.getElementById('assessmentCountsForm').onsubmit=event=>{
+    event.preventDefault();
+    const scores=sectionScores();
+    if(!scores)return;
+    const targets={};
+    for(const type of scoreTypes){
+      const value=Number(assessmentCountFields[type].value);
+      if(!Number.isInteger(value)||value<0||value>50){
+        scoresMessage('Each category must have between 0 and 50 assessments.');
+        return;
+      }
+      targets[type]=value;
+    }
+    const toRemove=[];
+    for(const type of scoreTypes){
+      const existing=scores.assessments.filter(a=>a.type===type);
+      if(targets[type]<existing.length)toRemove.push(...existing.slice(targets[type]));
+    }
+    if(toRemove.length){
+      const scored=toRemove.filter(a=>Object.values(scores.results).some(results=>results[a.id]!==undefined));
+      const warning=scored.length
+        ? 'Warning: '+scored.length+' of these assessments already have student scores. Their scores will also be deleted.'
+        : 'These assessments currently have no recorded scores.';
+      if(!confirm('Reduce the assessment counts by removing the LAST '+toRemove.length+' assessments in their categories?\n\n'+warning+'\n\nDownload a CSV backup first if needed.')) {
+        syncAssessmentCounts();
+        return;
+      }
+    }
+    const removedIds=new Set(toRemove.map(a=>a.id));
+    scores.assessments=scores.assessments.filter(a=>!removedIds.has(a.id));
+    for(const results of Object.values(scores.results)){
+      for(const id of removedIds)delete results[id];
+    }
+    for(const type of scoreTypes){
+      let count=scores.assessments.filter(a=>a.type===type).length;
+      while(count<targets[type]){
+        count++;
+        scores.assessments.push({id:uid(),type,title:type+' '+count,max:20});
+      }
+    }
+    persist();
+    scoresMessage('Assessment counts updated for every learner in this section.');
+    renderStudentScores();
+  };
   document.getElementById('assessmentForm').onsubmit=event=>{
     event.preventDefault();
     const title=document.getElementById('assessmentTitle').value.trim();
