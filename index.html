@@ -78,41 +78,6 @@
     .admin-status.approved { background:#dff5ea; color:#126843; }
     .admin-status.rejected { background:#ffe3df; color:#9e3030; }
     #adminFeedback { min-height:1.4em; color:var(--muted); font-weight:700; }
-
-    /* Student record assessments */
-    .score-dialog {width:min(96vw,840px);}
-    #studentDialog {width:min(96vw,860px);}
-    .profile-scores {padding:0 27px 27px;}
-    .profile-scores-head {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 12px;}
-    .profile-scores-head h3 {margin:0;}
-    .profile-score-columns {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
-    .profile-score-category {min-width:0;border:1px solid var(--line);border-radius:14px;background:#f8fbfc;padding:12px;}
-    .profile-score-category h4 {margin:0 0 12px;font-size:.9rem;}
-    .profile-score-row {display:grid;grid-template-columns:minmax(0,1fr) 85px;gap:8px;align-items:center;margin:0 0 10px;}
-    .profile-score-row span {font-size:.78rem;overflow-wrap:anywhere;}
-    .profile-score-row input {min-width:0;width:100%;padding:8px;border:1px solid #c9d8dd;border-radius:9px;background:#fff;}
-    .profile-score-row small {display:block;color:var(--muted);font-size:.72rem;}
-    #profileScoreFeedback {font-size:.82rem;min-height:18px;color:var(--red);margin:10px 0;}
-    @media(max-width:700px){.profile-score-columns{grid-template-columns:1fr;}}
-
-    .score-dialog .modal {max-height:86vh;overflow:auto;}
-    .score-grid {display:grid;gap:12px;}
-    .score-item {background:#f8fbfc;border:1px solid var(--line);border-radius:14px;padding:14px;}
-    .score-item-top {display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
-    .score-item input[type="number"] {width:130px;max-width:100%;border:1px solid #c9d8dd;border-radius:10px;padding:10px;}
-    .score-item small {color:var(--muted);}
-    .score-form {display:grid;grid-template-columns:1fr 2fr 110px auto;gap:9px;align-items:end;}
-    .score-form label {min-width:0;}
-    .score-form input,.score-form select {width:100%;padding:10px;border:1px solid #c9d8dd;border-radius:10px;background:#fff;}
-    .score-actions {display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0;}
-    .score-actions input[type=file] {max-width:100%;font-size:.85rem;}
-    .score-edit-row {display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;align-items:center;}
-    .assessment-counts {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0;}
-    .assessment-counts label {display:grid;gap:7px;padding:13px;border:1px solid var(--line);border-radius:13px;background:#f7fbff;}
-    .assessment-counts input {min-width:0;width:100%;padding:10px;border:1px solid #c9d8dd;border-radius:10px;}
-    .assessment-count-actions {display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
-    @media(max-width:600px){.assessment-counts{grid-template-columns:1fr;}}
-    @media(max-width:650px){.score-form{grid-template-columns:1fr 1fr;}}
   </style>
 </head>
 <body>
@@ -167,51 +132,10 @@
   </div>
 
   <dialog id="sectionDialog"><form method="dialog" class="modal" id="sectionForm"><h2 id="sectionDialogTitle">Add a section</h2><p>For example: Grade 2 – Sampaguita or Reading Group A.</p><div class="form-grid"><label>Section name<input type="text" id="sectionNameInput" maxlength="50" required placeholder="e.g. Grade 3 – Mabini"></label><div class="error" id="sectionError"></div></div><div class="modal-actions"><button class="secondary" type="button" data-close-dialog>Cancel</button><button class="primary" value="default" id="saveSection">Save section</button></div></form></dialog>
-  <dialog id="studentDialog"><form method="dialog" class="modal" id="studentForm"><h2 id="studentDialogTitle">Add a child</h2><p id="studentDialogText">Choose a picture icon so you can recognise each learner quickly.</p><div class="form-grid"><label>Child’s name<input type="text" id="studentNameInput" maxlength="50" required placeholder="e.g. Ana"></label><div><label>Choose a picture icon</label><div class="icon-grid" id="iconGrid"></div></div><div class="error" id="studentError"></div></div><div class="modal-actions"><button class="secondary" type="button" id="deleteStudent" hidden>Delete profile</button><button class="secondary" type="button" data-close-dialog>Cancel</button><button class="primary" value="default" id="saveStudent">Add child</button></div></form>
-    <section class="profile-scores" id="profileScoresSection" hidden>
-      <div class="profile-scores-head"><h3>📊 Student Score Record</h3><button type="button" class="secondary" id="profileManageAssessments">Manage assessments / total items</button></div>
-      <p>Enter this student's scores directly. Your section starts with 5 Written Works, 3 Performance Tasks and 3 Tests.</p>
-      <div id="profileScoresGrid" class="profile-score-columns"></div>
-      <div id="profileScoreFeedback" role="status" aria-live="polite"></div>
-    </section>
-  </dialog>
+  <dialog id="studentDialog"><form method="dialog" class="modal" id="studentForm"><h2 id="studentDialogTitle">Add a child</h2><p id="studentDialogText">Choose a picture icon so you can recognise each learner quickly.</p><div class="form-grid"><label>Child’s name<input type="text" id="studentNameInput" maxlength="50" required placeholder="e.g. Ana"></label><div><label>Choose a picture icon</label><div class="icon-grid" id="iconGrid"></div></div><div class="error" id="studentError"></div></div><div class="modal-actions"><button class="secondary" type="button" id="deleteStudent" hidden>Delete profile</button><button class="secondary" type="button" data-close-dialog>Cancel</button><button class="primary" value="default" id="saveStudent">Add child</button></div></form></dialog>
   <dialog id="raffleDialog"><div class="modal"><h2>Recitation raffle</h2><p id="raffleMessage">Only children marked Present today are included.</p><div id="raffleResult" aria-live="polite" style="min-height:76px;display:grid;place-items:center;padding:12px;border-radius:16px;background:#edf6ff;color:#205cba;font-size:1.45rem;font-weight:900;text-align:center">Ready to draw</div><div class="raffle-reward-actions" id="raffleRewardActions" hidden><button class="star-button" type="button" id="raffleAddStar">⭐ Award star</button><button class="star-button remove" type="button" id="raffleRemoveStar">Remove star</button></div><div class="modal-actions"><button class="secondary" type="button" id="resetRaffle">Start over</button><button class="secondary" type="button" id="closeRaffle">Close</button><button class="primary" type="button" id="drawRaffle">Draw a name</button></div></div></dialog>
   <dialog id="starHistoryDialog"><div class="modal"><h2>Daily star history</h2><p>Stars reset for each new date. This record shows the reward stars each learner earned every day.</p><div id="starHistoryList" class="star-history-list"></div><div class="modal-actions"><button class="secondary" type="button" id="closeStarHistory">Close</button></div></div></dialog>
 
-
-  <dialog id="scoresDialog" class="score-dialog">
-    <div class="modal">
-      <h2 id="scoresStudentName">Student scores</h2>
-      <p>Record this learner's Written Works, Performance Tasks, and Tests. Assessment titles and total items apply to the whole section.</p>
-      <div class="score-actions">
-        <button type="button" class="secondary" id="scoresExport">Download section scores CSV</button>
-        <label>Import section scores CSV<input type="file" id="scoresImport" accept=".csv,text/csv"></label>
-      </div>
-      <div id="scoresFeedback" class="error" role="status" aria-live="polite"></div>
-      <h3>Number of assessments for this section</h3>
-      <p>Set how many Written Works, Performance Tasks, and Tests your learners will take. Changes apply to every student in the section.</p>
-      <form id="assessmentCountsForm">
-        <div class="assessment-counts">
-          <label>Written Works <input id="countWritten" type="number" min="0" max="50" step="1" required></label>
-          <label>Performance Tasks <input id="countPerformance" type="number" min="0" max="50" step="1" required></label>
-          <label>Tests <input id="countTests" type="number" min="0" max="50" step="1" required></label>
-        </div>
-        <div class="assessment-count-actions">
-          <button class="primary" type="submit">Apply assessment counts</button>
-          <small>New assessments start at 20 items; you can edit that total afterward.</small>
-        </div>
-      </form>
-      <div id="scoresList" class="score-grid"></div>
-      <h3>Add assessment</h3>
-      <form id="assessmentForm" class="score-form">
-        <label>Type<select id="assessmentType"><option value="Written Work">Written Work</option><option value="Performance Task">Performance Task</option><option value="Test">Test</option></select></label>
-        <label>Title<input type="text" id="assessmentTitle" maxlength="90" placeholder="e.g. Written Work 1" required></label>
-        <label>Total items<input type="number" id="assessmentMax" min="1" max="10000" step="1" value="20" required></label>
-        <button type="submit" class="primary">Add</button>
-      </form>
-      <div class="modal-actions"><button class="secondary" type="button" id="scoresClose">Close</button></div>
-    </div>
-  </dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script>
@@ -251,7 +175,7 @@
     function renderSections(){const list=$('sectionList');list.innerHTML='';$('sectionCount').textContent=state.sections.length;state.sections.forEach(section=>{const button=document.createElement('button');button.className=`section-item ${section.id===state.selectedSectionId?'active':''}`;button.innerHTML=`<span class="section-dot" style="background:${section.color}"></span><span>${escapeHtml(section.name)}</span>`;button.onclick=()=>{state.selectedSectionId=section.id;$('studentSearch').value='';persist();render();};list.appendChild(button);});}
     function render(){document.getElementById('adminPage').hidden=true;renderSections();const section=currentSection();$('emptyState').hidden=Boolean(section);$('attendanceApp').hidden=!section;if(!section)return;$('sectionTitle').textContent=section.name;renderRegister();}
     function avatarMarkup(iconId){const avatar=avatarChoices.find(choice=>choice.id===iconId);if(!avatar)return `<span aria-hidden="true">${escapeHtml(iconId||'🧒')}</span>`;return `<span class="kid-avatar ${avatar.classes}" role="img" aria-label="${avatar.label}"><span class="ear left"></span><span class="ear right"></span><span class="face"></span><span class="hair"></span><span class="bow"></span><span class="eye left"></span><span class="eye right"></span><span class="smile"></span><span class="neck"></span><span class="shirt"></span></span>`;}
-    function renderRegister(){const section=currentSection();const attendance=getAttendance();const counts={present:0,late:0,absent:0};section.children.forEach(child=>{if(attendance[child.id])counts[attendance[child.id]]++;});$('totalCount').textContent=section.children.length;$('presentCount').textContent=counts.present;$('lateCount').textContent=counts.late;$('absentCount').textContent=counts.absent;const list=$('studentList');list.innerHTML='';if(!section.children.length){list.innerHTML='<div class="empty" style="min-height:260px;border:0;border-radius:0"><div><div class="empty-icon">🧒</div><h2>Add your learners</h2><p>Give each child a name and choose a picture icon before taking attendance.</p></div></div>';return;}section.children.forEach(child=>{const row=document.createElement('article');row.className='student';const status=attendance[child.id]||'';row.innerHTML=`<div class="student-info"><div class="avatar">${avatarMarkup(child.icon)}</div><div><span class="student-name">${escapeHtml(child.name)}</span><span class="student-note">${status?`Marked ${status}`:'Not marked yet'}</span><button class="edit-student" data-edit-student>Edit profile</button><button class="edit-student" data-student-scores type="button">📊 Scores</button></div></div><div class="status-actions"><button class="status-btn present ${status==='present'?'active':''}" data-status="present">Present</button><button class="status-btn late ${status==='late'?'active':''}" data-status="late">Late</button><button class="status-btn absent ${status==='absent'?'active':''}" data-status="absent">Absent</button></div>`;row.querySelectorAll('[data-status]').forEach(button=>button.onclick=()=>markAttendance(child.id,button.dataset.status));row.querySelector('[data-edit-student]').onclick=()=>openStudentDialog(child);row.querySelector('[data-student-scores]').onclick=()=>openStudentScores(child.id);list.appendChild(row);});}
+    function renderRegister(){const section=currentSection();const attendance=getAttendance();const counts={present:0,late:0,absent:0};section.children.forEach(child=>{if(attendance[child.id])counts[attendance[child.id]]++;});$('totalCount').textContent=section.children.length;$('presentCount').textContent=counts.present;$('lateCount').textContent=counts.late;$('absentCount').textContent=counts.absent;const list=$('studentList');list.innerHTML='';if(!section.children.length){list.innerHTML='<div class="empty" style="min-height:260px;border:0;border-radius:0"><div><div class="empty-icon">🧒</div><h2>Add your learners</h2><p>Give each child a name and choose a picture icon before taking attendance.</p></div></div>';return;}section.children.forEach(child=>{const row=document.createElement('article');row.className='student';const status=attendance[child.id]||'';row.innerHTML=`<div class="student-info"><div class="avatar">${avatarMarkup(child.icon)}</div><div><span class="student-name">${escapeHtml(child.name)}</span><span class="student-note">${status?`Marked ${status}`:'Not marked yet'}</span><button class="edit-student" data-edit-student>Edit profile</button></div></div><div class="status-actions"><button class="status-btn present ${status==='present'?'active':''}" data-status="present">Present</button><button class="status-btn late ${status==='late'?'active':''}" data-status="late">Late</button><button class="status-btn absent ${status==='absent'?'active':''}" data-status="absent">Absent</button></div>`;row.querySelectorAll('[data-status]').forEach(button=>button.onclick=()=>markAttendance(child.id,button.dataset.status));row.querySelector('[data-edit-student]').onclick=()=>openStudentDialog(child);list.appendChild(row);});}
     function renderRegister(){const section=currentSection();const attendance=getAttendance();const counts={present:0,late:0,absent:0};section.children.forEach(child=>{if(attendance[child.id])counts[attendance[child.id]]++;});$('totalCount').textContent=section.children.length;$('presentCount').textContent=counts.present;$('lateCount').textContent=counts.late;$('absentCount').textContent=counts.absent;const list=$('studentList');list.innerHTML='';if(!section.children.length){list.innerHTML='<div class="empty" style="min-height:260px;border:0;border-radius:0"><div><div class="empty-icon">🧒</div><h2>Add your learners</h2><p>Give each child a name and choose a picture icon before taking attendance.</p></div></div>';return;}section.children.forEach(child=>{const row=document.createElement('article');row.className='student';const status=attendance[child.id]||'';const stars=Number(child.stars)||0;const starDisplay=stars?`${'⭐'.repeat(Math.min(stars,5))}${stars>5?` +${stars-5}`:''}`:'No stars yet';row.innerHTML=`<div class="student-info"><div class="avatar">${avatarMarkup(child.icon)}</div><div><span class="student-name">${escapeHtml(child.name)}</span><span class="student-note">${status?`Marked ${status}`:'Not marked yet'}</span><div class="student-tools"><span class="star-total" aria-label="${stars} reward stars">${starDisplay}</span><button class="star-button" data-add-star aria-label="Give ${escapeHtml(child.name)} a reward star for a correct answer">⭐ Award star</button>${stars?'<button class="star-button remove" data-remove-star>Remove star</button>':''}<button class="edit-student" data-edit-student>Edit profile</button></div></div></div><div class="status-actions"><button class="status-btn present ${status==='present'?'active':''}" data-status="present">Present</button><button class="status-btn late ${status==='late'?'active':''}" data-status="late">Late</button><button class="status-btn absent ${status==='absent'?'active':''}" data-status="absent">Absent</button></div>`;row.querySelectorAll('[data-status]').forEach(button=>button.onclick=()=>markAttendance(child.id,button.dataset.status));row.querySelector('[data-add-star]').onclick=()=>adjustStars(child.id,1);if(stars)row.querySelector('[data-remove-star]').onclick=()=>adjustStars(child.id,-1);row.querySelector('[data-edit-student]').onclick=()=>openStudentDialog(child);list.appendChild(row);});}
     function adjustStars(childId,amount){const child=currentSection().children.find(item=>item.id===childId);if(!child)return;child.stars=Math.max(0,(Number(child.stars)||0)+amount);persist();renderRegister();}
     function updateAttendanceReward(childId,status){const key=attendanceKey();state.attendanceStarRewards[key]??={};const rewards=state.attendanceStarRewards[key];const child=currentSection().children.find(item=>item.id===childId);if(!child)return;const qualifies=status==='present'||status==='late';if(qualifies&&!rewards[childId]){child.stars=(Number(child.stars)||0)+1;rewards[childId]=true;}if(!qualifies&&rewards[childId]){child.stars=Math.max(0,(Number(child.stars)||0)-1);delete rewards[childId];}}
@@ -259,7 +183,7 @@
     function openSectionDialog(section){editingSectionId=section?.id||null;$('sectionDialogTitle').textContent=section?'Rename section':'Add a section';$('sectionNameInput').value=section?.name||'';$('sectionError').textContent='';$('sectionDialog').showModal();$('sectionNameInput').focus();}
     function saveSection(event){event.preventDefault();const name=$('sectionNameInput').value.trim();if(!name){$('sectionError').textContent='Please enter a section name.';return;}if(editingSectionId){state.sections.find(section=>section.id===editingSectionId).name=name;}else{const section={id:uid(),name,color:palette[state.sections.length%palette.length],children:[]};state.sections.push(section);state.selectedSectionId=section.id;}persist();$('sectionDialog').close();render();}
     function renderIcons(){const grid=$('iconGrid');grid.innerHTML='';['boy','girl'].forEach(group=>{const label=document.createElement('div');label.className='icon-group-label';label.textContent=group==='boy'?'Boys':'Girls';grid.appendChild(label);avatarChoices.filter(avatar=>avatar.classes.includes(group)).forEach(avatar=>{const button=document.createElement('button');button.type='button';button.className=`icon-choice ${avatar.id===selectedIcon?'selected':''}`;button.innerHTML=avatarMarkup(avatar.id);button.setAttribute('aria-label',`Choose ${avatar.label}`);button.setAttribute('aria-pressed',String(avatar.id===selectedIcon));button.onclick=()=>{selectedIcon=avatar.id;renderIcons();};grid.appendChild(button);});});}
-    function openStudentDialog(child){editingStudentId=child?.id||null;$('studentDialogTitle').textContent=child?'Edit child profile':'Add a child';$('studentDialogText').textContent=child?'Change the child’s name or choose a different cartoon picture icon.':'Choose a picture icon so you can recognise each learner quickly.';$('saveStudent').textContent=child?'Save changes':'Add child';$('deleteStudent').hidden=!child;$('studentNameInput').value=child?.name||'';$('studentError').textContent='';selectedIcon=child?.icon||avatarChoices[0].id;renderIcons();$('profileScoresSection').hidden=!child;if(child&&typeof renderProfileScores==='function')renderProfileScores(child.id);$('studentDialog').showModal();$('studentNameInput').focus();}
+    function openStudentDialog(child){editingStudentId=child?.id||null;$('studentDialogTitle').textContent=child?'Edit child profile':'Add a child';$('studentDialogText').textContent=child?'Change the child’s name or choose a different cartoon picture icon.':'Choose a picture icon so you can recognise each learner quickly.';$('saveStudent').textContent=child?'Save changes':'Add child';$('deleteStudent').hidden=!child;$('studentNameInput').value=child?.name||'';$('studentError').textContent='';selectedIcon=child?.icon||avatarChoices[0].id;renderIcons();$('studentDialog').showModal();$('studentNameInput').focus();}
     function saveStudent(event){event.preventDefault();const name=$('studentNameInput').value.trim();if(!name){$('studentError').textContent='Please enter the child’s name.';return;}if(editingStudentId){const child=currentSection().children.find(item=>item.id===editingStudentId);child.name=name;child.icon=selectedIcon;}else{currentSection().children.push({id:uid(),name,icon:selectedIcon});}persist();$('studentDialog').close();renderRegister();}
     function deleteStudent(){const child=currentSection().children.find(item=>item.id===editingStudentId);if(!child||!confirm(`Delete ${child.name}'s profile and all of this child's saved attendance marks?`))return;currentSection().children=currentSection().children.filter(item=>item.id!==editingStudentId);Object.values(state.attendance).forEach(records=>delete records[editingStudentId]);Object.values(state.attendanceStarRewards).forEach(rewards=>delete rewards[editingStudentId]);Object.values(state.raffleDraws).forEach(draws=>{const index=draws.indexOf(editingStudentId);if(index>-1)draws.splice(index,1);});persist();$('studentDialog').close();renderRegister();}
     function renderRaffle(){const present=presentChildren();const key=attendanceKey();const drawn=state.raffleDraws[key]||[];const remaining=present.filter(child=>!drawn.includes(child.id));const hasPresent=present.length>0;$('raffleMessage').textContent=!hasPresent?'Mark at least one child Present before drawing.':remaining.length?`${remaining.length} of ${present.length} present learner${present.length===1?'':'s'} still available.`:'Everyone marked Present has had a turn.';$('drawRaffle').disabled=!remaining.length;$('resetRaffle').hidden=!drawn.length;}
@@ -275,286 +199,19 @@
     function changeDailyStars(childId,amount){const key=attendanceKey();state.dailyStars[key]??={};const next=Math.max(0,(Number(state.dailyStars[key][childId])||0)+amount);if(next)state.dailyStars[key][childId]=next;else delete state.dailyStars[key][childId];return next;}
     function adjustStars(childId,amount){const child=currentSection().children.find(item=>item.id===childId);if(!child)return;changeDailyStars(childId,amount);persist();renderRegister();}
     function updateAttendanceReward(childId,status){const key=attendanceKey();state.attendanceStarRewards[key]??={};const rewards=state.attendanceStarRewards[key];const qualifies=status==='present'||status==='late';if(qualifies&&!rewards[childId]){changeDailyStars(childId,1);rewards[childId]=true;}if(!qualifies&&rewards[childId]){changeDailyStars(childId,-1);delete rewards[childId];}}
-    function renderRegister(){const section=currentSection();const attendance=getAttendance();const counts={present:0,late:0,absent:0};section.children.forEach(child=>{if(attendance[child.id])counts[attendance[child.id]]++;});$('totalCount').textContent=section.children.length;$('presentCount').textContent=counts.present;$('lateCount').textContent=counts.late;$('absentCount').textContent=counts.absent;const list=$('studentList');list.innerHTML='';const query=$('studentSearch').value.trim().toLocaleLowerCase();$('clearStudentSearch').hidden=!query;$('searchCount').textContent='';if(!section.children.length){list.innerHTML='<div class="empty" style="min-height:260px;border:0;border-radius:0"><div><div class="empty-icon">🧒</div><h2>Add your learners</h2><p>Give each child a name and choose a picture icon before taking attendance.</p></div></div>';return;}const matchingChildren=section.children.filter(child=>child.name.toLocaleLowerCase().includes(query));$('searchCount').textContent=query?`${matchingChildren.length} of ${section.children.length} students`:`${section.children.length} students`;if(!matchingChildren.length){list.innerHTML='<div class="search-empty"><strong>No students found</strong>Try another name or clear your search.</div>';return;}matchingChildren.forEach(child=>{const row=document.createElement('article');row.className='student';const status=attendance[child.id]||'';const stars=dailyStarCount(child.id);const starDisplay=stars?`${'⭐'.repeat(Math.min(stars,5))}${stars>5?` +${stars-5}`:''}`:'No stars today';row.innerHTML=`<div class="student-info"><div class="avatar">${avatarMarkup(child.icon)}</div><div><span class="student-name">${escapeHtml(child.name)}</span><span class="student-note">${status?`Marked ${status}`:'Not marked yet'}</span><div class="student-tools"><span class="star-total" aria-label="${stars} reward stars for this day">${starDisplay}</span><button class="star-button" data-add-star aria-label="Give ${escapeHtml(child.name)} a reward star for a correct answer">⭐ Award star</button>${stars?'<button class="star-button remove" data-remove-star>Remove star</button>':''}<button class="edit-student" data-edit-student>Edit profile</button><button class="edit-student" data-student-scores type="button">📊 Scores</button></div></div></div><div class="status-actions"><button class="status-btn present ${status==='present'?'active':''}" data-status="present">Present</button><button class="status-btn late ${status==='late'?'active':''}" data-status="late">Late</button><button class="status-btn absent ${status==='absent'?'active':''}" data-status="absent">Absent</button></div>`;row.querySelectorAll('[data-status]').forEach(button=>button.onclick=()=>markAttendance(child.id,button.dataset.status));row.querySelector('[data-add-star]').onclick=()=>adjustStars(child.id,1);if(stars)row.querySelector('[data-remove-star]').onclick=()=>adjustStars(child.id,-1);row.querySelector('[data-edit-student]').onclick=()=>openStudentDialog(child);row.querySelector('[data-student-scores]').onclick=()=>openStudentScores(child.id);list.appendChild(row);});}
+    function renderRegister(){const section=currentSection();const attendance=getAttendance();const counts={present:0,late:0,absent:0};section.children.forEach(child=>{if(attendance[child.id])counts[attendance[child.id]]++;});$('totalCount').textContent=section.children.length;$('presentCount').textContent=counts.present;$('lateCount').textContent=counts.late;$('absentCount').textContent=counts.absent;const list=$('studentList');list.innerHTML='';const query=$('studentSearch').value.trim().toLocaleLowerCase();$('clearStudentSearch').hidden=!query;$('searchCount').textContent='';if(!section.children.length){list.innerHTML='<div class="empty" style="min-height:260px;border:0;border-radius:0"><div><div class="empty-icon">🧒</div><h2>Add your learners</h2><p>Give each child a name and choose a picture icon before taking attendance.</p></div></div>';return;}const matchingChildren=section.children.filter(child=>child.name.toLocaleLowerCase().includes(query));$('searchCount').textContent=query?`${matchingChildren.length} of ${section.children.length} students`:`${section.children.length} students`;if(!matchingChildren.length){list.innerHTML='<div class="search-empty"><strong>No students found</strong>Try another name or clear your search.</div>';return;}matchingChildren.forEach(child=>{const row=document.createElement('article');row.className='student';const status=attendance[child.id]||'';const stars=dailyStarCount(child.id);const starDisplay=stars?`${'⭐'.repeat(Math.min(stars,5))}${stars>5?` +${stars-5}`:''}`:'No stars today';row.innerHTML=`<div class="student-info"><div class="avatar">${avatarMarkup(child.icon)}</div><div><span class="student-name">${escapeHtml(child.name)}</span><span class="student-note">${status?`Marked ${status}`:'Not marked yet'}</span><div class="student-tools"><span class="star-total" aria-label="${stars} reward stars for this day">${starDisplay}</span><button class="star-button" data-add-star aria-label="Give ${escapeHtml(child.name)} a reward star for a correct answer">⭐ Award star</button>${stars?'<button class="star-button remove" data-remove-star>Remove star</button>':''}<button class="edit-student" data-edit-student>Edit profile</button></div></div></div><div class="status-actions"><button class="status-btn present ${status==='present'?'active':''}" data-status="present">Present</button><button class="status-btn late ${status==='late'?'active':''}" data-status="late">Late</button><button class="status-btn absent ${status==='absent'?'active':''}" data-status="absent">Absent</button></div>`;row.querySelectorAll('[data-status]').forEach(button=>button.onclick=()=>markAttendance(child.id,button.dataset.status));row.querySelector('[data-add-star]').onclick=()=>adjustStars(child.id,1);if(stars)row.querySelector('[data-remove-star]').onclick=()=>adjustStars(child.id,-1);row.querySelector('[data-edit-student]').onclick=()=>openStudentDialog(child);list.appendChild(row);});}
     function renderRaffleReward(){const child=currentSection().children.find(item=>item.id===raffledChildId);if(!child){$('raffleResult').textContent='Ready to draw';$('raffleRewardActions').hidden=true;return;}const stars=dailyStarCount(child.id);const display=stars?`${'⭐'.repeat(Math.min(stars,5))}${stars>5?` +${stars-5}`:''}`:'No stars today';$('raffleResult').innerHTML=`<div>${escapeHtml(child.name)}</div><div class="raffle-stars">${display}</div>`;$('raffleRewardActions').hidden=false;$('raffleRemoveStar').disabled=stars===0;}
     function renderStarHistory(){const section=currentSection();const prefix=`${section.id}|`;const days=Object.entries(state.dailyStars).filter(([key,rewards])=>key.startsWith(prefix)&&Object.values(rewards).some(stars=>Number(stars)>0)).sort(([first],[second])=>second.localeCompare(first));const history=$('starHistoryList');if(!days.length){history.innerHTML='<div class="history-empty">No reward stars have been recorded for this section yet.</div>';return;}history.innerHTML=days.map(([key,rewards])=>{const date=key.slice(prefix.length);const learners=section.children.filter(child=>Number(rewards[child.id])>0).map(child=>`<li><span>${escapeHtml(child.name)}</span><span>${'⭐'.repeat(Math.min(Number(rewards[child.id]),5))}${Number(rewards[child.id])>5?` +${Number(rewards[child.id])-5}`:''}</span></li>`).join('');const label=new Intl.DateTimeFormat('en-PH',{day:'numeric',month:'long',year:'numeric'}).format(new Date(`${date}T12:00:00`));return learners?`<section class="star-history-day"><h3>${label}</h3><ul>${learners}</ul></section>`:'';}).join('')||'<div class="history-empty">No saved stars are available for the current learners.</div>';}
     function openStarHistory(){renderStarHistory();$('starHistoryDialog').showModal();}
-    function deleteStudent(){const child=currentSection().children.find(item=>item.id===editingStudentId);if(!child||!confirm(`Delete ${child.name}'s profile and all of this child's saved attendance marks?`))return;currentSection().children=currentSection().children.filter(item=>item.id!==editingStudentId);Object.values(state.attendance).forEach(records=>delete records[editingStudentId]);Object.values(state.attendanceStarRewards).forEach(rewards=>delete rewards[editingStudentId]);Object.values(state.dailyStars).forEach(rewards=>delete rewards[editingStudentId]);if(state.scores?.[state.selectedSectionId]?.results)delete state.scores[state.selectedSectionId].results[editingStudentId];Object.values(state.raffleDraws).forEach(draws=>{const index=draws.indexOf(editingStudentId);if(index>-1)draws.splice(index,1);});persist();$('studentDialog').close();renderRegister();}
+    function deleteStudent(){const child=currentSection().children.find(item=>item.id===editingStudentId);if(!child||!confirm(`Delete ${child.name}'s profile and all of this child's saved attendance marks?`))return;currentSection().children=currentSection().children.filter(item=>item.id!==editingStudentId);Object.values(state.attendance).forEach(records=>delete records[editingStudentId]);Object.values(state.attendanceStarRewards).forEach(rewards=>delete rewards[editingStudentId]);Object.values(state.dailyStars).forEach(rewards=>delete rewards[editingStudentId]);Object.values(state.raffleDraws).forEach(draws=>{const index=draws.indexOf(editingStudentId);if(index>-1)draws.splice(index,1);});persist();$('studentDialog').close();renderRegister();}
     $('studentSearch').addEventListener('input',renderRegister);$('clearStudentSearch').onclick=()=>{$('studentSearch').value='';renderRegister();$('studentSearch').focus();};
     $('markAllPresent').onclick=()=>{const key=attendanceKey();state.attendance[key]??={};currentSection().children.forEach(child=>{state.attendance[key][child.id]='present';updateAttendanceReward(child.id,'present');});updateRaffle();persist();renderRegister();};$('starHistoryButton').onclick=openStarHistory;$('closeStarHistory').onclick=()=>$('starHistoryDialog').close();
   </script>
-
-<script>
-  // Scores live in each teacher's RLS-protected cloud snapshot.
-  // Format: state.scores[sectionId] = { assessments:[{id,type,title,max}], results:{studentId:{assessmentId:score}} }
-  let scoreStudentId=null;
-  const scoreTypes=['Written Work','Performance Task','Test'];
-  const scoreEls={dialog:document.getElementById('scoresDialog'),list:document.getElementById('scoresList'),feedback:document.getElementById('scoresFeedback')};
-  function sectionScores(){
-    const section=currentSection();
-    if(!section)return null;
-    state.scores??={};
-    state.scores[section.id]??={assessments:[],results:{}};
-    const scores=state.scores[section.id];
-    scores.assessments??=[];scores.results??={};
-    if(scores.initialSetup!==true){
-      // Existing teacher-created assessments always take precedence over starter values.
-      if(scores.assessments.length===0){
-        const defaults=[['Written Work',5],['Performance Task',3],['Test',3]];
-        for(const [type,count] of defaults){
-          for(let n=1;n<=count;n++)scores.assessments.push({id:uid(),type,title:type+' '+n,max:20});
-        }
-        if(typeof cloudReady!=='undefined'&&cloudReady)persist();
-      }
-      scores.initialSetup=true;
-    }
-    return scores;
-  }
-  function scoresMessage(message){scoreEls.feedback.textContent=message||'';}
-  function openStudentScores(studentId){
-    const student=currentSection()?.children.find(child=>child.id===studentId);
-    if(!student)return;
-    scoreStudentId=studentId;
-    document.getElementById('scoresStudentName').textContent='Scores — '+student.name;
-    scoresMessage('');
-    renderStudentScores();
-    scoreEls.dialog.showModal();
-  }
-
-  function renderProfileScores(studentId){
-    const scores=sectionScores();
-    const area=document.getElementById('profileScoresGrid');
-    const feedback=document.getElementById('profileScoreFeedback');
-    area.replaceChildren();
-    feedback.textContent='';
-    if(!scores)return;
-    for(const type of scoreTypes){
-      const panel=document.createElement('div');panel.className='profile-score-category';
-      const title=document.createElement('h4');title.textContent=type+'s';panel.appendChild(title);
-      const assessments=scores.assessments.filter(a=>a.type===type);
-      if(!assessments.length){
-        const empty=document.createElement('small');empty.textContent='No assessments configured.';panel.appendChild(empty);
-      }
-      for(const assessment of assessments){
-        const row=document.createElement('label');row.className='profile-score-row';
-        const label=document.createElement('span');label.textContent=assessment.title;
-        const max=document.createElement('small');max.textContent='Out of '+assessment.max;
-        label.appendChild(max);
-        const input=document.createElement('input');input.type='number';input.min='0';input.max=String(assessment.max);input.step='any';
-        input.placeholder='—';input.setAttribute('aria-label',assessment.title+' score out of '+assessment.max);
-        const stored=scores.results[studentId]?.[assessment.id];
-        input.value=stored===undefined?'':String(stored);
-        input.onchange=()=>{
-          const value=input.value.trim();
-          if(value!==''&&(!Number.isFinite(Number(value))||Number(value)<0||Number(value)>assessment.max)){
-            feedback.textContent='Enter a score from 0 to '+assessment.max+' for '+assessment.title+'.';
-            input.value=scores.results[studentId]?.[assessment.id]??'';
-            return;
-          }
-          scores.results[studentId]??={};
-          if(value==='')delete scores.results[studentId][assessment.id];
-          else scores.results[studentId][assessment.id]=Number(value);
-          feedback.textContent='Score updated. Check cloud save status before signing out.';
-          persist();
-        };
-        row.append(label,input);panel.appendChild(row);
-      }
-      area.appendChild(panel);
-    }
-  }
-  document.getElementById('profileManageAssessments').onclick=()=>{
-    const id=editingStudentId;
-    document.getElementById('studentDialog').close();
-    if(id)openStudentScores(id);
-  };
-
-  function renderStudentScores(){
-    syncAssessmentCounts();
-    const scores=sectionScores();
-    if(!scores||!scoreStudentId)return;
-    scoreEls.list.replaceChildren();
-    if(!scores.assessments.length){
-      const hint=document.createElement('p');hint.textContent='No assessments yet. Add the first Written Work, Performance Task, or Test below.';
-      scoreEls.list.appendChild(hint);
-    }
-    for(const type of scoreTypes){
-      const assessments=scores.assessments.filter(a=>a.type===type);
-      if(!assessments.length)continue;
-      const heading=document.createElement('h3');heading.textContent=type+'s';scoreEls.list.appendChild(heading);
-      for(const assessment of assessments){
-        const card=document.createElement('div');card.className='score-item';
-        const top=document.createElement('div');top.className='score-item-top';
-        const title=document.createElement('strong');title.textContent=assessment.title+' (/'+assessment.max+')';
-        const scoreWrap=document.createElement('label');scoreWrap.textContent='Score ';
-        const input=document.createElement('input');input.type='number';input.min='0';input.max=String(assessment.max);input.step='any';input.placeholder='Not entered';
-        const previous=scores.results[scoreStudentId]?.[assessment.id];input.value=previous===undefined?'':String(previous);
-        input.setAttribute('aria-label',assessment.title+' score');
-        input.onchange=()=>{
-          const raw=input.value.trim();
-          if(raw!==''&&(!Number.isFinite(Number(raw))||Number(raw)<0||Number(raw)>assessment.max)){
-            scoresMessage('Score must be between 0 and '+assessment.max+'.');input.value=previous===undefined?'':String(scores.results[scoreStudentId]?.[assessment.id]??'');return;
-          }
-          scores.results[scoreStudentId]??={};
-          if(raw==='')delete scores.results[scoreStudentId][assessment.id];
-          else scores.results[scoreStudentId][assessment.id]=Number(raw);
-          scoresMessage('Score updated.');persist();
-        };
-        scoreWrap.appendChild(input);top.append(title,scoreWrap);card.appendChild(top);
-        const controls=document.createElement('div');controls.className='score-edit-row';
-        const edit=document.createElement('button');edit.type='button';edit.className='secondary';edit.textContent='Edit assessment';
-        edit.onclick=()=>{
-          const newTitle=prompt('Assessment title (shared by all students):',assessment.title);
-          if(newTitle===null)return;
-          const cleanTitle=newTitle.trim();if(!cleanTitle||cleanTitle.length>90){scoresMessage('Please use a title of 1–90 characters.');return;}
-          const newMax=prompt('Total items / highest possible score:',String(assessment.max));
-          if(newMax===null)return;
-          const max=Number(newMax);
-          if(!Number.isInteger(max)||max<1||max>10000){scoresMessage('Total items must be a whole number from 1 to 10000.');return;}
-          const hasOverMax=Object.values(scores.results).some(byAssessment=>Number(byAssessment[assessment.id])>max);
-          if(hasOverMax){scoresMessage('Some students already have scores above '+max+'. Adjust those scores before lowering the total items.');return;}
-          assessment.title=cleanTitle;assessment.max=max;persist();scoresMessage('Assessment updated for the section.');renderStudentScores();
-        };
-        const remove=document.createElement('button');remove.type='button';remove.className='secondary';remove.textContent='Delete assessment';
-        remove.onclick=()=>{
-          if(!confirm('Delete '+assessment.title+' and its scores for every student in this section?'))return;
-          scores.assessments=scores.assessments.filter(a=>a.id!==assessment.id);
-          for(const result of Object.values(scores.results))delete result[assessment.id];
-          persist();scoresMessage('Assessment removed.');renderStudentScores();
-        };
-        controls.append(edit,remove);card.appendChild(controls);scoreEls.list.appendChild(card);
-      }
-    }
-  }
-
-  const assessmentCountFields={
-    'Written Work':document.getElementById('countWritten'),
-    'Performance Task':document.getElementById('countPerformance'),
-    'Test':document.getElementById('countTests')
-  };
-  function syncAssessmentCounts(){
-    const scores=sectionScores();
-    if(!scores)return;
-    for(const type of scoreTypes){
-      assessmentCountFields[type].value=scores.assessments.filter(a=>a.type===type).length;
-    }
-  }
-  document.getElementById('assessmentCountsForm').onsubmit=event=>{
-    event.preventDefault();
-    const scores=sectionScores();
-    if(!scores)return;
-    const targets={};
-    for(const type of scoreTypes){
-      const value=Number(assessmentCountFields[type].value);
-      if(!Number.isInteger(value)||value<0||value>50){
-        scoresMessage('Each category must have between 0 and 50 assessments.');
-        return;
-      }
-      targets[type]=value;
-    }
-    const toRemove=[];
-    for(const type of scoreTypes){
-      const existing=scores.assessments.filter(a=>a.type===type);
-      if(targets[type]<existing.length)toRemove.push(...existing.slice(targets[type]));
-    }
-    if(toRemove.length){
-      const scored=toRemove.filter(a=>Object.values(scores.results).some(results=>results[a.id]!==undefined));
-      const warning=scored.length
-        ? 'Warning: '+scored.length+' of these assessments already have student scores. Their scores will also be deleted.'
-        : 'These assessments currently have no recorded scores.';
-      if(!confirm('Reduce the assessment counts by removing the LAST '+toRemove.length+' assessments in their categories?\n\n'+warning+'\n\nDownload a CSV backup first if needed.')) {
-        syncAssessmentCounts();
-        return;
-      }
-    }
-    const removedIds=new Set(toRemove.map(a=>a.id));
-    scores.assessments=scores.assessments.filter(a=>!removedIds.has(a.id));
-    for(const results of Object.values(scores.results)){
-      for(const id of removedIds)delete results[id];
-    }
-    for(const type of scoreTypes){
-      let count=scores.assessments.filter(a=>a.type===type).length;
-      while(count<targets[type]){
-        count++;
-        scores.assessments.push({id:uid(),type,title:type+' '+count,max:20});
-      }
-    }
-    persist();
-    scoresMessage('Assessment counts updated for every learner in this section.');
-    renderStudentScores();
-  };
-  document.getElementById('assessmentForm').onsubmit=event=>{
-    event.preventDefault();
-    const title=document.getElementById('assessmentTitle').value.trim();
-    const type=document.getElementById('assessmentType').value;
-    const max=Number(document.getElementById('assessmentMax').value);
-    if(!title||!scoreTypes.includes(type)||!Number.isInteger(max)||max<1||max>10000){scoresMessage('Enter a title and a valid total item count (1–10000).');return;}
-    sectionScores().assessments.push({id:uid(),type,title,max});
-    document.getElementById('assessmentTitle').value='';
-    persist();scoresMessage('Assessment added for all students in this section.');renderStudentScores();
-  };
-  document.getElementById('scoresClose').onclick=()=>scoreEls.dialog.close();
-  function csvScoreCell(value){const str=String(value??'');return '"'+str.replaceAll('"','""')+'"';}
-  function downloadScoresCsv(){
-    const section=currentSection();const scores=sectionScores();if(!section||!scores)return;
-    // Stable IDs enable reliable import even if student names are duplicated.
-    const headers=['student_id','student_name',...scores.assessments.map(a=>a.id)];
-    const rows=[headers,['assessment_type','',...scores.assessments.map(a=>a.type)],['assessment_title','',...scores.assessments.map(a=>a.title)],['total_items','',...scores.assessments.map(a=>a.max)]];
-    for(const child of section.children)rows.push([child.id,child.name,...scores.assessments.map(a=>scores.results[child.id]?.[a.id]??'')]);
-    const csv=rows.map(row=>row.map(csvScoreCell).join(',')).join('\r\n');
-    const link=document.createElement('a');const url=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
-    link.href=url;link.download=(section.name.replace(/[^a-z0-9-]+/gi,'-')||'classroll')+'-scores.csv';
-    document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
-  }
-  // CSV parser handles quoted commas, line breaks and escaped quotes (Excel format).
-  function parseScoresCsv(text){
-    const rows=[];let row=[],cell='',quoted=false;
-    for(let i=0;i<text.length;i++){
-      const c=text[i];
-      if(c==='"'){if(quoted&&text[i+1]==='"'){cell+='"';i++;}else quoted=!quoted;}
-      else if(c===','&&!quoted){row.push(cell);cell='';}
-      else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell);if(row.some(x=>x!==''))rows.push(row);row=[];cell='';}
-      else cell+=c;
-    }
-    if(quoted)throw Error('Invalid CSV: unclosed quote.');
-    row.push(cell);if(row.some(x=>x!==''))rows.push(row);
-    if(rows[0]?.[0]?.charCodeAt(0)===65279)rows[0][0]=rows[0][0].slice(1);
-    return rows;
-  }
-  async function importScoresCsv(file){
-    if(!file)return;
-    if(file.size>2*1024*1024){scoresMessage('CSV files must be smaller than 2 MB.');return;}
-    try{
-      const text=await file.text(), rows=parseScoresCsv(text);
-      const scores=sectionScores(),section=currentSection();
-      if(rows.length<4||rows[0][0]!=='student_id'||rows[0][1]!=='student_name'||rows[1][0]!=='assessment_type'||rows[2][0]!=='assessment_title'||rows[3][0]!=='total_items')
-        throw Error('Use a CSV downloaded from this section’s Scores page.');
-      const ids=rows[0].slice(2), headers=scores.assessments.map(a=>a.id);
-      if(ids.length!==headers.length||ids.some((id,i)=>id!==headers[i]))
-        throw Error('Assessments have changed. Download a fresh scores CSV before importing.');
-      const people=new Set(section.children.map(c=>c.id)),updates=[];
-      for(const row of rows.slice(4)){
-        if(!people.has(row[0]))throw Error('The CSV contains a student who is not in this section.');
-        for(let j=0;j<ids.length;j++){
-          const value=(row[j+2]??'').trim();
-          if(value!==''&&(!Number.isFinite(Number(value))||Number(value)<0||Number(value)>scores.assessments[j].max))
-            throw Error('Invalid score for '+row[1]+' in '+scores.assessments[j].title+'.');
-          updates.push({student:row[0],assessment:ids[j],value});
-        }
-      }
-      if(!confirm('Import '+updates.length+' score cells into '+section.name+'? Existing scores in matching cells will be replaced.'))return;
-      for(const x of updates){scores.results[x.student]??={};if(x.value==='')delete scores.results[x.student][x.assessment];else scores.results[x.student][x.assessment]=Number(x.value);}
-      persist();renderStudentScores();scoresMessage('Imported scores. Check the cloud save status before signing out.');
-    }catch(error){scoresMessage('Import failed: '+error.message);}
-  }
-  document.getElementById('scoresExport').onclick=downloadScoresCsv;
-  document.getElementById('scoresImport').onchange=async e=>{await importScoresCsv(e.target.files?.[0]);e.target.value='';};
-</script>
-
 <script>
   // Cloud adapter: all reads/writes are scoped by authenticated user + database RLS.
   let cloudClient=null, cloudUser=null, cloudReady=false, saveTimer=null, saveChain=Promise.resolve(), changeCounter=0;
-  const blankState=()=>({sections:[],selectedSectionId:null,attendance:{},raffleDraws:{},attendanceStarRewards:{},dailyStars:{},dailyStarVersion:true,scores:{}});
-  function resetWorkingState(data){state=Object.assign(blankState(),data||{}); if(!Array.isArray(state.sections))state.sections=[]; if(!state.scores||typeof state.scores!=='object')state.scores={}; if(!state.sections.some(s=>s.id===state.selectedSectionId))state.selectedSectionId=state.sections[0]?.id||null; render();}
+  const blankState=()=>({sections:[],selectedSectionId:null,attendance:{},raffleDraws:{},attendanceStarRewards:{},dailyStars:{},dailyStarVersion:true});
+  function resetWorkingState(data){state=Object.assign(blankState(),data||{}); if(!Array.isArray(state.sections))state.sections=[]; if(!state.sections.some(s=>s.id===state.selectedSectionId))state.selectedSectionId=state.sections[0]?.id||null; render();}
   function setAuthMessage(message){document.getElementById('authFeedback').textContent=message;}
   function setGate(visible){document.getElementById('authGate').hidden=!visible; document.getElementById('classrollShell').hidden=visible;}
   function queueCloudSave(){
