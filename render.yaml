@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: classroll-online
+    runtime: static
+    buildCommand: echo "ClassRoll static website ready"
+    staticPublishPath: .
