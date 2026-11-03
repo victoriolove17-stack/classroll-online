@@ -78,6 +78,13 @@
     .admin-status.approved { background:#dff5ea; color:#126843; }
     .admin-status.rejected { background:#ffe3df; color:#9e3030; }
     #adminFeedback { min-height:1.4em; color:var(--muted); font-weight:700; }
+    .star-totals { margin:14px 0 22px; border:1px solid var(--line);border-radius:16px;padding:14px;background:#f8fbfc; }
+    .star-total-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
+    .star-total-heading strong {font-size:1rem;}
+    .star-total-heading span {color:#805800;font-weight:900;}
+    .star-totals-list {list-style:none;margin:0;padding:0;display:grid;gap:7px;max-height:250px;overflow:auto;}
+    .star-totals-list li {display:flex;justify-content:space-between;gap:14px;padding:8px 10px;background:#fff;border:1px solid var(--line);border-radius:10px;}
+    .star-totals-list li strong {color:#805800;}
   </style>
 </head>
 <body>
@@ -134,7 +141,7 @@
   <dialog id="sectionDialog"><form method="dialog" class="modal" id="sectionForm"><h2 id="sectionDialogTitle">Add a section</h2><p>For example: Grade 2 – Sampaguita or Reading Group A.</p><div class="form-grid"><label>Section name<input type="text" id="sectionNameInput" maxlength="50" required placeholder="e.g. Grade 3 – Mabini"></label><div class="error" id="sectionError"></div></div><div class="modal-actions"><button class="secondary" type="button" data-close-dialog>Cancel</button><button class="primary" value="default" id="saveSection">Save section</button></div></form></dialog>
   <dialog id="studentDialog"><form method="dialog" class="modal" id="studentForm"><h2 id="studentDialogTitle">Add a child</h2><p id="studentDialogText">Choose a picture icon so you can recognise each learner quickly.</p><div class="form-grid"><label>Child’s name<input type="text" id="studentNameInput" maxlength="50" required placeholder="e.g. Ana"></label><div><label>Choose a picture icon</label><div class="icon-grid" id="iconGrid"></div></div><div class="error" id="studentError"></div></div><div class="modal-actions"><button class="secondary" type="button" id="deleteStudent" hidden>Delete profile</button><button class="secondary" type="button" data-close-dialog>Cancel</button><button class="primary" value="default" id="saveStudent">Add child</button></div></form></dialog>
   <dialog id="raffleDialog"><div class="modal"><h2>Recitation raffle</h2><p id="raffleMessage">Only children marked Present today are included.</p><div id="raffleResult" aria-live="polite" style="min-height:76px;display:grid;place-items:center;padding:12px;border-radius:16px;background:#edf6ff;color:#205cba;font-size:1.45rem;font-weight:900;text-align:center">Ready to draw</div><div class="raffle-reward-actions" id="raffleRewardActions" hidden><button class="star-button" type="button" id="raffleAddStar">⭐ Award star</button><button class="star-button remove" type="button" id="raffleRemoveStar">Remove star</button></div><div class="modal-actions"><button class="secondary" type="button" id="resetRaffle">Start over</button><button class="secondary" type="button" id="closeRaffle">Close</button><button class="primary" type="button" id="drawRaffle">Draw a name</button></div></div></dialog>
-  <dialog id="starHistoryDialog"><div class="modal"><h2>Daily star history</h2><p>Stars reset for each new date. This record shows the reward stars each learner earned every day.</p><div id="starHistoryList" class="star-history-list"></div><div class="modal-actions"><button class="secondary" type="button" id="closeStarHistory">Close</button></div></div></dialog>
+  <dialog id="starHistoryDialog"><div class="modal"><h2>Daily star history</h2><p>Daily stars reset each date. The totals below add each learner’s stars across all recorded dates in this section.</p><div id="starTotals" class="star-totals" aria-live="polite"></div><h3>Daily star history</h3><div id="starHistoryList" class="star-history-list"></div><div class="modal-actions"><button class="secondary" type="button" id="closeStarHistory">Close</button></div></div></dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
@@ -201,7 +208,46 @@
     function updateAttendanceReward(childId,status){const key=attendanceKey();state.attendanceStarRewards[key]??={};const rewards=state.attendanceStarRewards[key];const qualifies=status==='present'||status==='late';if(qualifies&&!rewards[childId]){changeDailyStars(childId,1);rewards[childId]=true;}if(!qualifies&&rewards[childId]){changeDailyStars(childId,-1);delete rewards[childId];}}
     function renderRegister(){const section=currentSection();const attendance=getAttendance();const counts={present:0,late:0,absent:0};section.children.forEach(child=>{if(attendance[child.id])counts[attendance[child.id]]++;});$('totalCount').textContent=section.children.length;$('presentCount').textContent=counts.present;$('lateCount').textContent=counts.late;$('absentCount').textContent=counts.absent;const list=$('studentList');list.innerHTML='';const query=$('studentSearch').value.trim().toLocaleLowerCase();$('clearStudentSearch').hidden=!query;$('searchCount').textContent='';if(!section.children.length){list.innerHTML='<div class="empty" style="min-height:260px;border:0;border-radius:0"><div><div class="empty-icon">🧒</div><h2>Add your learners</h2><p>Give each child a name and choose a picture icon before taking attendance.</p></div></div>';return;}const matchingChildren=section.children.filter(child=>child.name.toLocaleLowerCase().includes(query));$('searchCount').textContent=query?`${matchingChildren.length} of ${section.children.length} students`:`${section.children.length} students`;if(!matchingChildren.length){list.innerHTML='<div class="search-empty"><strong>No students found</strong>Try another name or clear your search.</div>';return;}matchingChildren.forEach(child=>{const row=document.createElement('article');row.className='student';const status=attendance[child.id]||'';const stars=dailyStarCount(child.id);const starDisplay=stars?`${'⭐'.repeat(Math.min(stars,5))}${stars>5?` +${stars-5}`:''}`:'No stars today';row.innerHTML=`<div class="student-info"><div class="avatar">${avatarMarkup(child.icon)}</div><div><span class="student-name">${escapeHtml(child.name)}</span><span class="student-note">${status?`Marked ${status}`:'Not marked yet'}</span><div class="student-tools"><span class="star-total" aria-label="${stars} reward stars for this day">${starDisplay}</span><button class="star-button" data-add-star aria-label="Give ${escapeHtml(child.name)} a reward star for a correct answer">⭐ Award star</button>${stars?'<button class="star-button remove" data-remove-star>Remove star</button>':''}<button class="edit-student" data-edit-student>Edit profile</button></div></div></div><div class="status-actions"><button class="status-btn present ${status==='present'?'active':''}" data-status="present">Present</button><button class="status-btn late ${status==='late'?'active':''}" data-status="late">Late</button><button class="status-btn absent ${status==='absent'?'active':''}" data-status="absent">Absent</button></div>`;row.querySelectorAll('[data-status]').forEach(button=>button.onclick=()=>markAttendance(child.id,button.dataset.status));row.querySelector('[data-add-star]').onclick=()=>adjustStars(child.id,1);if(stars)row.querySelector('[data-remove-star]').onclick=()=>adjustStars(child.id,-1);row.querySelector('[data-edit-student]').onclick=()=>openStudentDialog(child);list.appendChild(row);});}
     function renderRaffleReward(){const child=currentSection().children.find(item=>item.id===raffledChildId);if(!child){$('raffleResult').textContent='Ready to draw';$('raffleRewardActions').hidden=true;return;}const stars=dailyStarCount(child.id);const display=stars?`${'⭐'.repeat(Math.min(stars,5))}${stars>5?` +${stars-5}`:''}`:'No stars today';$('raffleResult').innerHTML=`<div>${escapeHtml(child.name)}</div><div class="raffle-stars">${display}</div>`;$('raffleRewardActions').hidden=false;$('raffleRemoveStar').disabled=stars===0;}
-    function renderStarHistory(){const section=currentSection();const prefix=`${section.id}|`;const days=Object.entries(state.dailyStars).filter(([key,rewards])=>key.startsWith(prefix)&&Object.values(rewards).some(stars=>Number(stars)>0)).sort(([first],[second])=>second.localeCompare(first));const history=$('starHistoryList');if(!days.length){history.innerHTML='<div class="history-empty">No reward stars have been recorded for this section yet.</div>';return;}history.innerHTML=days.map(([key,rewards])=>{const date=key.slice(prefix.length);const learners=section.children.filter(child=>Number(rewards[child.id])>0).map(child=>`<li><span>${escapeHtml(child.name)}</span><span>${'⭐'.repeat(Math.min(Number(rewards[child.id]),5))}${Number(rewards[child.id])>5?` +${Number(rewards[child.id])-5}`:''}</span></li>`).join('');const label=new Intl.DateTimeFormat('en-PH',{day:'numeric',month:'long',year:'numeric'}).format(new Date(`${date}T12:00:00`));return learners?`<section class="star-history-day"><h3>${label}</h3><ul>${learners}</ul></section>`:'';}).join('')||'<div class="history-empty">No saved stars are available for the current learners.</div>';}
+    function renderStarHistory(){
+      const section=currentSection();if(!section)return;
+      const prefix=section.id+'|';
+      const entries=Object.entries(state.dailyStars||{}).filter(([key])=>key.startsWith(prefix));
+      const totals=new Map(section.children.map(child=>[child.id,0]));
+      const days=entries.filter(([,rewards])=>Object.values(rewards||{}).some(stars=>Number(stars)>0))
+        .sort(([first],[second])=>second.localeCompare(first));
+      for(const [,rewards] of entries){
+        for(const child of section.children){
+          const amount=Number(rewards?.[child.id])||0;
+          if(amount>0)totals.set(child.id,totals.get(child.id)+amount);
+        }
+      }
+      const grandTotal=[...totals.values()].reduce((a,b)=>a+b,0);
+      const totalBox=$('starTotals');
+      totalBox.replaceChildren();
+      const heading=document.createElement('div');heading.className='star-total-heading';
+      const label=document.createElement('strong');label.textContent='Total Stars Earned';
+      const overall=document.createElement('span');overall.textContent='⭐ '+grandTotal+' across '+section.children.length+' students';
+      heading.append(label,overall);totalBox.appendChild(heading);
+      const list=document.createElement('ul');list.className='star-totals-list';
+      const ranked=[...section.children].sort((a,b)=>(totals.get(b.id)||0)-(totals.get(a.id)||0)||a.name.localeCompare(b.name));
+      for(const child of ranked){
+        const row=document.createElement('li');
+        const name=document.createElement('span');name.textContent=child.name;
+        const count=document.createElement('strong');count.textContent='⭐ '+totals.get(child.id);
+        row.append(name,count);list.appendChild(row);
+      }
+      if(!ranked.length){const note=document.createElement('p');note.textContent='No students in this section yet.';totalBox.appendChild(note);}
+      else totalBox.appendChild(list);
+      const history=$('starHistoryList');
+      if(!days.length){history.innerHTML='<div class="history-empty">No reward stars have been recorded for this section yet.</div>';return;}
+      history.innerHTML=days.map(([key,rewards])=>{
+        const date=key.slice(prefix.length);
+        const learners=section.children.filter(child=>Number(rewards[child.id])>0)
+          .map(child=>`<li><span>${escapeHtml(child.name)}</span><span>${'⭐'.repeat(Math.min(Number(rewards[child.id]),5))}${Number(rewards[child.id])>5?` +${Number(rewards[child.id])-5}`:''}</span></li>`).join('');
+        const dateLabel=new Intl.DateTimeFormat('en-PH',{day:'numeric',month:'long',year:'numeric'}).format(new Date(date+'T12:00:00'));
+        return learners?`<section class="star-history-day"><h3>${dateLabel}</h3><ul>${learners}</ul></section>`:'';
+      }).join('')||'<div class="history-empty">No saved stars are available for the current learners.</div>';
+    }
     function openStarHistory(){renderStarHistory();$('starHistoryDialog').showModal();}
     function deleteStudent(){const child=currentSection().children.find(item=>item.id===editingStudentId);if(!child||!confirm(`Delete ${child.name}'s profile and all of this child's saved attendance marks?`))return;currentSection().children=currentSection().children.filter(item=>item.id!==editingStudentId);Object.values(state.attendance).forEach(records=>delete records[editingStudentId]);Object.values(state.attendanceStarRewards).forEach(rewards=>delete rewards[editingStudentId]);Object.values(state.dailyStars).forEach(rewards=>delete rewards[editingStudentId]);Object.values(state.raffleDraws).forEach(draws=>{const index=draws.indexOf(editingStudentId);if(index>-1)draws.splice(index,1);});persist();$('studentDialog').close();renderRegister();}
     $('studentSearch').addEventListener('input',renderRegister);$('clearStudentSearch').onclick=()=>{$('studentSearch').value='';renderRegister();$('studentSearch').focus();};
