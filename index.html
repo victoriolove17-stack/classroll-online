@@ -58,6 +58,26 @@
     #pendingActions { display:flex; flex-wrap:wrap; gap:9px; margin-top:18px; }
     .online-account { padding:8px; display:grid; gap:7px; overflow-wrap:anywhere; color:var(--muted); font-size:.78rem; }
     .online-account button { justify-self:start; }
+
+    /* Administrator review panel — teacher account permissions are enforced by database RLS. */
+    .admin-nav { width:100%; margin-top:10px; border:1px solid #bcd5f5; border-radius:13px; padding:12px; background:#edf5ff; color:#245fae; font-weight:850; text-align:left; }
+    .admin-page { max-width:1080px; margin:0 auto; }
+    .admin-header { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; }
+    .admin-box { border:1px solid var(--line); border-radius:20px; background:white; overflow:hidden; box-shadow:var(--shadow); }
+    .admin-summary { padding:18px 22px; border-bottom:1px solid var(--line); color:var(--muted); }
+    .admin-list { display:grid; }
+    .admin-entry { display:flex; gap:14px; align-items:center; justify-content:space-between; flex-wrap:wrap; padding:18px 22px; border-bottom:1px solid var(--line); }
+    .admin-entry:last-child { border-bottom:0; }
+    .admin-person { min-width:200px; overflow-wrap:anywhere; }
+    .admin-person strong { display:block; color:var(--ink); }
+    .admin-person small { display:block; color:var(--muted); margin-top:4px; }
+    .admin-actions { display:flex; flex-wrap:wrap; gap:8px; }
+    .admin-actions button { min-height:42px; }
+    .admin-status { display:inline-block; border-radius:999px; padding:5px 10px; font-weight:800; font-size:.8rem; }
+    .admin-status.pending { background:#fff3c1; color:#755000; }
+    .admin-status.approved { background:#dff5ea; color:#126843; }
+    .admin-status.rejected { background:#ffe3df; color:#9e3030; }
+    #adminFeedback { min-height:1.4em; color:var(--muted); font-weight:700; }
   </style>
 </head>
 <body>
@@ -85,6 +105,7 @@
       <div class="sidebar-label"><span>My sections</span><span id="sectionCount">0</span></div>
       <div class="section-list" id="sectionList"></div>
       <button class="add-section" id="addSectionButton">＋ Add a section</button>
+      <button class="admin-nav" id="adminNav" type="button" hidden>🛡️ Teacher Approvals</button>
       <p class="sidebar-foot">Attendance is saved privately in this browser. Use the download button to keep a copy.</p>
     </aside>
     <main>
@@ -94,6 +115,18 @@
         <div class="controls"><button class="primary" id="addStudentButton">＋ Add a child</button><button class="secondary" id="markAllPresent">Mark everyone present</button><button class="secondary" id="raffleButton">🎲 Raffle a name</button><button class="secondary" id="starHistoryButton">⭐ Star history</button><button class="secondary" id="downloadButton">⇩ Download record</button></div>
         <div class="stats"><div class="stat"><b id="totalCount">0</b><small>Children</small></div><div class="stat present"><b id="presentCount">0</b><small>Present</small></div><div class="stat late"><b id="lateCount">0</b><small>Late</small></div><div class="stat absent"><b id="absentCount">0</b><small>Absent</small></div></div>
         <div class="register"><div class="register-head"><div><h2>Today’s class</h2><p>Marking Present or Late gives one daily reward star. Daily stars reset on a new date.</p></div><button class="secondary" id="renameSection">Rename section</button></div><div class="student-search-bar"><div class="student-search-field"><span class="search-icon" aria-hidden="true">🔎</span><input id="studentSearch" type="search" placeholder="Search student name..." aria-label="Search students by name" autocomplete="off"><button id="clearStudentSearch" class="clear-search" type="button" aria-label="Clear student search" hidden>×</button></div><span id="searchCount" class="search-count" aria-live="polite"></span></div><div id="studentList"></div></div>
+      </section>
+
+      <section id="adminPage" class="admin-page" hidden aria-label="Administrator teacher approvals">
+        <div class="admin-header">
+          <div><p class="eyebrow">Administrator</p><h1>Teacher Approvals</h1></div>
+          <div class="admin-actions"><button id="adminRefresh" class="secondary" type="button">Refresh list</button><button id="adminBack" class="secondary" type="button">Back to my sections</button></div>
+        </div>
+        <div class="admin-box">
+          <p class="admin-summary">Review registered teachers before granting access. Rejected accounts cannot access classroom records. Only an authorized administrator can make these changes.</p>
+          <div id="adminList" class="admin-list" aria-live="polite"></div>
+        </div>
+        <p id="adminFeedback" role="status" aria-live="polite"></p>
       </section>
     </main>
   </div>
@@ -140,7 +173,7 @@
     function uid(){return crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random()}`;}
     function escapeHtml(value){const div=document.createElement('div');div.textContent=value;return div.innerHTML;}
     function renderSections(){const list=$('sectionList');list.innerHTML='';$('sectionCount').textContent=state.sections.length;state.sections.forEach(section=>{const button=document.createElement('button');button.className=`section-item ${section.id===state.selectedSectionId?'active':''}`;button.innerHTML=`<span class="section-dot" style="background:${section.color}"></span><span>${escapeHtml(section.name)}</span>`;button.onclick=()=>{state.selectedSectionId=section.id;$('studentSearch').value='';persist();render();};list.appendChild(button);});}
-    function render(){renderSections();const section=currentSection();$('emptyState').hidden=Boolean(section);$('attendanceApp').hidden=!section;if(!section)return;$('sectionTitle').textContent=section.name;renderRegister();}
+    function render(){document.getElementById('adminPage').hidden=true;renderSections();const section=currentSection();$('emptyState').hidden=Boolean(section);$('attendanceApp').hidden=!section;if(!section)return;$('sectionTitle').textContent=section.name;renderRegister();}
     function avatarMarkup(iconId){const avatar=avatarChoices.find(choice=>choice.id===iconId);if(!avatar)return `<span aria-hidden="true">${escapeHtml(iconId||'🧒')}</span>`;return `<span class="kid-avatar ${avatar.classes}" role="img" aria-label="${avatar.label}"><span class="ear left"></span><span class="ear right"></span><span class="face"></span><span class="hair"></span><span class="bow"></span><span class="eye left"></span><span class="eye right"></span><span class="smile"></span><span class="neck"></span><span class="shirt"></span></span>`;}
     function renderRegister(){const section=currentSection();const attendance=getAttendance();const counts={present:0,late:0,absent:0};section.children.forEach(child=>{if(attendance[child.id])counts[attendance[child.id]]++;});$('totalCount').textContent=section.children.length;$('presentCount').textContent=counts.present;$('lateCount').textContent=counts.late;$('absentCount').textContent=counts.absent;const list=$('studentList');list.innerHTML='';if(!section.children.length){list.innerHTML='<div class="empty" style="min-height:260px;border:0;border-radius:0"><div><div class="empty-icon">🧒</div><h2>Add your learners</h2><p>Give each child a name and choose a picture icon before taking attendance.</p></div></div>';return;}section.children.forEach(child=>{const row=document.createElement('article');row.className='student';const status=attendance[child.id]||'';row.innerHTML=`<div class="student-info"><div class="avatar">${avatarMarkup(child.icon)}</div><div><span class="student-name">${escapeHtml(child.name)}</span><span class="student-note">${status?`Marked ${status}`:'Not marked yet'}</span><button class="edit-student" data-edit-student>Edit profile</button></div></div><div class="status-actions"><button class="status-btn present ${status==='present'?'active':''}" data-status="present">Present</button><button class="status-btn late ${status==='late'?'active':''}" data-status="late">Late</button><button class="status-btn absent ${status==='absent'?'active':''}" data-status="absent">Absent</button></div>`;row.querySelectorAll('[data-status]').forEach(button=>button.onclick=()=>markAttendance(child.id,button.dataset.status));row.querySelector('[data-edit-student]').onclick=()=>openStudentDialog(child);list.appendChild(row);});}
     function renderRegister(){const section=currentSection();const attendance=getAttendance();const counts={present:0,late:0,absent:0};section.children.forEach(child=>{if(attendance[child.id])counts[attendance[child.id]]++;});$('totalCount').textContent=section.children.length;$('presentCount').textContent=counts.present;$('lateCount').textContent=counts.late;$('absentCount').textContent=counts.absent;const list=$('studentList');list.innerHTML='';if(!section.children.length){list.innerHTML='<div class="empty" style="min-height:260px;border:0;border-radius:0"><div><div class="empty-icon">🧒</div><h2>Add your learners</h2><p>Give each child a name and choose a picture icon before taking attendance.</p></div></div>';return;}section.children.forEach(child=>{const row=document.createElement('article');row.className='student';const status=attendance[child.id]||'';const stars=Number(child.stars)||0;const starDisplay=stars?`${'⭐'.repeat(Math.min(stars,5))}${stars>5?` +${stars-5}`:''}`:'No stars yet';row.innerHTML=`<div class="student-info"><div class="avatar">${avatarMarkup(child.icon)}</div><div><span class="student-name">${escapeHtml(child.name)}</span><span class="student-note">${status?`Marked ${status}`:'Not marked yet'}</span><div class="student-tools"><span class="star-total" aria-label="${stars} reward stars">${starDisplay}</span><button class="star-button" data-add-star aria-label="Give ${escapeHtml(child.name)} a reward star for a correct answer">⭐ Award star</button>${stars?'<button class="star-button remove" data-remove-star>Remove star</button>':''}<button class="edit-student" data-edit-student>Edit profile</button></div></div></div><div class="status-actions"><button class="status-btn present ${status==='present'?'active':''}" data-status="present">Present</button><button class="status-btn late ${status==='late'?'active':''}" data-status="late">Late</button><button class="status-btn absent ${status==='absent'?'active':''}" data-status="absent">Absent</button></div>`;row.querySelectorAll('[data-status]').forEach(button=>button.onclick=()=>markAttendance(child.id,button.dataset.status));row.querySelector('[data-add-star]').onclick=()=>adjustStars(child.id,1);if(stars)row.querySelector('[data-remove-star]').onclick=()=>adjustStars(child.id,-1);row.querySelector('[data-edit-student]').onclick=()=>openStudentDialog(child);list.appendChild(row);});}
@@ -200,15 +233,15 @@
     if(!cloudUser)return;
     setGate(true);
     setAuthMessage('Checking account approval…');
-    const {data:profile,error}=await cloudClient.from('teacher_profiles').select('approved').eq('id',cloudUser.id).maybeSingle();
+    const {data:profile,error}=await cloudClient.from('teacher_profiles').select('approved,review_status').eq('id',cloudUser.id).maybeSingle();
     if(error){setAuthMessage('Could not check account: '+error.message);return;}
     if(!profile){setAuthMessage('Your profile is being created. Check again shortly.');document.getElementById('pendingActions').hidden=false;return;}
-    if(!profile.approved){setAuthMessage('Your teacher account is awaiting administrator approval. You cannot access classroom records yet.');document.getElementById('authForm').hidden=true;document.getElementById('authToggle').hidden=true;document.getElementById('authReset').hidden=true;document.getElementById('pendingActions').hidden=false;return;}
+    if(!profile.approved){setAuthMessage(profile.review_status==='rejected'?'Your account request was not approved. Contact your school administrator.':'Your teacher account is awaiting administrator approval. You cannot access classroom records yet.');document.getElementById('authForm').hidden=true;document.getElementById('authToggle').hidden=true;document.getElementById('authReset').hidden=true;document.getElementById('pendingActions').hidden=false;return;}
     const {data:record,error:loadError}=await cloudClient.from('teacher_data').select('data').eq('teacher_id',cloudUser.id).maybeSingle();
     if(loadError){setAuthMessage('Cannot load your sections: '+loadError.message);return;}
     resetWorkingState(record?.data);
     document.getElementById('accountEmail').textContent=cloudUser.email||'Teacher';
-    cloudReady=true;setGate(false);
+    cloudReady=true;setGate(false);await refreshAdminEligibility();
     document.getElementById('saveStatus').textContent='Saved in cloud';
   }
   async function initializeSession(){
@@ -230,7 +263,7 @@
     document.getElementById('authPassword').autocomplete='current-password';
     document.getElementById('authPassword').required=true;
     document.getElementById('authName').required=false;
-    registrationMode=false;setAuthMessage('');
+    registrationMode=false;document.getElementById('adminNav').hidden=true;document.getElementById('adminPage').hidden=true;setAuthMessage('');
   }
   let registrationMode=false;
   document.getElementById('authToggle').onclick=()=>{
@@ -274,6 +307,95 @@
     const {error}=await cloudClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
     setAuthMessage(error?error.message:'If that email is registered, password-reset instructions will be sent.');
   };
+
+  // Admin access is granted only by the database's classroll_admins table.
+  let isClassRollAdmin=false;
+  const adminNav=document.getElementById('adminNav');
+  const adminPage=document.getElementById('adminPage');
+  const adminList=document.getElementById('adminList');
+  const adminFeedback=document.getElementById('adminFeedback');
+  async function refreshAdminEligibility(){
+    isClassRollAdmin=false;
+    adminNav.hidden=true;
+    if(!cloudUser)return;
+    const {data,error}=await cloudClient.from('classroll_admins').select('user_id').eq('user_id',cloudUser.id).maybeSingle();
+    if(error){console.warn('Could not check administrator access:',error.message);return;}
+    isClassRollAdmin=Boolean(data);
+    adminNav.hidden=!isClassRollAdmin;
+  }
+  function adminStatusBadge(status){
+    const badge=document.createElement('span');
+    badge.className='admin-status '+(status==='approved'?'approved':status==='rejected'?'rejected':'pending');
+    badge.textContent=status==='approved'?'Approved':status==='rejected'?'Rejected':'Pending';
+    return badge;
+  }
+  async function openAdminPage(){
+    if(!isClassRollAdmin||!cloudUser||!cloudReady)return;
+    document.getElementById('emptyState').hidden=true;
+    document.getElementById('attendanceApp').hidden=true;
+    adminPage.hidden=false;
+    await loadTeacherRequests();
+  }
+  async function loadTeacherRequests(){
+    if(!isClassRollAdmin)return;
+    adminFeedback.textContent='Loading registered teachers…';
+    const {data,error}=await cloudClient.from('teacher_profiles')
+      .select('id,email,full_name,approved,review_status,created_at')
+      .order('created_at',{ascending:false});
+    if(error){adminFeedback.textContent='Unable to load teachers: '+error.message;return;}
+    const teachers=data||[];
+    adminList.replaceChildren();
+    if(!teachers.length){
+      const empty=document.createElement('p');empty.className='admin-summary';empty.textContent='No registered teacher accounts yet.';
+      adminList.appendChild(empty);
+    }
+    for(const teacher of teachers){
+      const status=teacher.review_status|| (teacher.approved?'approved':'pending');
+      const entry=document.createElement('article');entry.className='admin-entry';
+      const info=document.createElement('div');info.className='admin-person';
+      const name=document.createElement('strong');name.textContent=teacher.full_name||'Teacher';
+      const email=document.createElement('small');email.textContent=teacher.email||'No email';
+      info.append(name,email,adminStatusBadge(status));
+      entry.appendChild(info);
+      const actions=document.createElement('div');actions.className='admin-actions';
+      if(teacher.id===cloudUser?.id){
+        const label=document.createElement('small');label.textContent='Your administrator account';actions.appendChild(label);
+      }else{
+        const approve=document.createElement('button');approve.className='primary';approve.type='button';
+        approve.textContent=status==='approved'?'Approved ✓':'Approve';
+        approve.disabled=status==='approved';
+        approve.onclick=()=>reviewTeacher(teacher,'approve',actions);
+        actions.appendChild(approve);
+        if(status!=='rejected'){
+          const reject=document.createElement('button');reject.className='secondary';reject.type='button';
+          reject.textContent=status==='approved'?'Revoke access':'Reject';
+          reject.onclick=()=>reviewTeacher(teacher,status==='approved'?'revoke':'reject',actions);
+          actions.appendChild(reject);
+        }
+      }
+      entry.appendChild(actions);adminList.appendChild(entry);
+    }
+    adminFeedback.textContent=teachers.filter(t=>!t.approved&&t.review_status!=='rejected').length+' pending request(s) · '+teachers.length+' registered teacher(s)';
+  }
+  async function reviewTeacher(teacher,action,actions){
+    if(!isClassRollAdmin||teacher.id===cloudUser?.id)return;
+    const verb=action==='approve'?'approve':action==='reject'?'reject':'revoke access for';
+    if(!confirm('Are you sure you want to '+verb+' '+(teacher.email||'this teacher')+'?'))return;
+    Array.from(actions.querySelectorAll('button')).forEach(b=>b.disabled=true);
+    adminFeedback.textContent='Saving decision…';
+    const nextStatus=action==='approve'?'approved':'rejected';
+    const {data,error}=await cloudClient.from('teacher_profiles')
+      .update({approved:action==='approve',review_status:nextStatus})
+      .eq('id',teacher.id)
+      .select('id,approved,review_status');
+    if(error){adminFeedback.textContent='Could not update account: '+error.message;Array.from(actions.querySelectorAll('button')).forEach(b=>b.disabled=false);return;}
+    if(!data?.length){adminFeedback.textContent='No account was updated. Check administrator access.';return;}
+    await loadTeacherRequests();
+  }
+  adminNav.onclick=openAdminPage;
+  document.getElementById('adminRefresh').onclick=loadTeacherRequests;
+  document.getElementById('adminBack').onclick=()=>{adminPage.hidden=true;render();};
+
   (async()=>{
     const cfg=window.CLASSROLL_CONFIG||{};
     if(!cfg.supabaseUrl||!cfg.supabaseAnonKey||cfg.supabaseUrl.includes('YOUR_')){
