@@ -141,7 +141,7 @@
   <dialog id="sectionDialog"><form method="dialog" class="modal" id="sectionForm"><h2 id="sectionDialogTitle">Add a section</h2><p>For example: Grade 2 – Sampaguita or Reading Group A.</p><div class="form-grid"><label>Section name<input type="text" id="sectionNameInput" maxlength="50" required placeholder="e.g. Grade 3 – Mabini"></label><div class="error" id="sectionError"></div></div><div class="modal-actions"><button class="secondary" type="button" data-close-dialog>Cancel</button><button class="primary" value="default" id="saveSection">Save section</button></div></form></dialog>
   <dialog id="studentDialog"><form method="dialog" class="modal" id="studentForm"><h2 id="studentDialogTitle">Add a child</h2><p id="studentDialogText">Choose a picture icon so you can recognise each learner quickly.</p><div class="form-grid"><label>Child’s name<input type="text" id="studentNameInput" maxlength="50" required placeholder="e.g. Ana"></label><div><label>Choose a picture icon</label><div class="icon-grid" id="iconGrid"></div></div><div class="error" id="studentError"></div></div><div class="modal-actions"><button class="secondary" type="button" id="deleteStudent" hidden>Delete profile</button><button class="secondary" type="button" data-close-dialog>Cancel</button><button class="primary" value="default" id="saveStudent">Add child</button></div></form></dialog>
   <dialog id="raffleDialog"><div class="modal"><h2>Recitation raffle</h2><p id="raffleMessage">Only children marked Present today are included.</p><div id="raffleResult" aria-live="polite" style="min-height:76px;display:grid;place-items:center;padding:12px;border-radius:16px;background:#edf6ff;color:#205cba;font-size:1.45rem;font-weight:900;text-align:center">Ready to draw</div><div class="raffle-reward-actions" id="raffleRewardActions" hidden><button class="star-button" type="button" id="raffleAddStar">⭐ Award star</button><button class="star-button remove" type="button" id="raffleRemoveStar">Remove star</button></div><div class="modal-actions"><button class="secondary" type="button" id="resetRaffle">Start over</button><button class="secondary" type="button" id="closeRaffle">Close</button><button class="primary" type="button" id="drawRaffle">Draw a name</button></div></div></dialog>
-  <dialog id="starHistoryDialog"><div class="modal"><h2>Daily star history</h2><p>Daily stars reset each date. The totals below add each learner’s stars across all recorded dates in this section.</p><div id="starTotals" class="star-totals" aria-live="polite"></div><h3>Daily star history</h3><div id="starHistoryList" class="star-history-list"></div><div class="modal-actions"><button class="secondary" type="button" id="closeStarHistory">Close</button></div></div></dialog>
+  <dialog id="starHistoryDialog"><div class="modal"><h2>Daily star history</h2><p>See how many stars each student has earned across daily lessons. Individual daily records remain below.</p><div id="starTotals" class="star-totals" aria-live="polite"></div><h3>Daily star history</h3><div id="starHistoryList" class="star-history-list"></div><div class="modal-actions"><button class="secondary" type="button" id="closeStarHistory">Close</button></div></div></dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
@@ -221,19 +221,17 @@
           if(amount>0)totals.set(child.id,totals.get(child.id)+amount);
         }
       }
-      const grandTotal=[...totals.values()].reduce((a,b)=>a+b,0);
       const totalBox=$('starTotals');
       totalBox.replaceChildren();
       const heading=document.createElement('div');heading.className='star-total-heading';
-      const label=document.createElement('strong');label.textContent='Total Stars Earned';
-      const overall=document.createElement('span');overall.textContent='⭐ '+grandTotal+' across '+section.children.length+' students';
-      heading.append(label,overall);totalBox.appendChild(heading);
+      const label=document.createElement('strong');label.textContent='Stars earned per student (all lessons)';
+      heading.appendChild(label);totalBox.appendChild(heading);
       const list=document.createElement('ul');list.className='star-totals-list';
       const ranked=[...section.children].sort((a,b)=>(totals.get(b.id)||0)-(totals.get(a.id)||0)||a.name.localeCompare(b.name));
       for(const child of ranked){
         const row=document.createElement('li');
         const name=document.createElement('span');name.textContent=child.name;
-        const count=document.createElement('strong');count.textContent='⭐ '+totals.get(child.id);
+        const count=document.createElement('strong');count.textContent='⭐ '+totals.get(child.id)+' total';
         row.append(name,count);list.appendChild(row);
       }
       if(!ranked.length){const note=document.createElement('p');note.textContent='No students in this section yet.';totalBox.appendChild(note);}
