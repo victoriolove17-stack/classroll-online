@@ -260,47 +260,135 @@
     $('markAllPresent').onclick=()=>{const key=attendanceKey();state.attendance[key]??={};currentSection().children.forEach(child=>{state.attendance[key][child.id]='present';updateAttendanceReward(child.id,'present');});updateRaffle();persist();renderRegister();};$('starHistoryButton').onclick=openStarHistory;$('closeStarHistory').onclick=()=>$('starHistoryDialog').close();
   </script>
 <script>
-  // Cloud adapter: all reads/writes are scoped by authenticated user + database RLS.
+  // Offline-first adapter. Supabase RLS still enforces account ownership when online.
   let cloudClient=null, cloudUser=null, cloudReady=false, saveTimer=null, saveChain=Promise.resolve(), changeCounter=0;
+  let offlineWriteChain=Promise.resolve(),syncBusy=false,syncConflict=false;
   const blankState=()=>({sections:[],selectedSectionId:null,attendance:{},raffleDraws:{},attendanceStarRewards:{},dailyStars:{},dailyStarVersion:true});
-  function resetWorkingState(data){state=Object.assign(blankState(),data||{}); if(!Array.isArray(state.sections))state.sections=[]; if(!state.sections.some(s=>s.id===state.selectedSectionId))state.selectedSectionId=state.sections[0]?.id||null; render();}
+  function resetWorkingState(data){
+    state=Object.assign(blankState(),data||{});
+    if(!Array.isArray(state.sections))state.sections=[];
+    if(!state.sections.some(x=>x.id===state.selectedSectionId))state.selectedSectionId=state.sections[0]?.id||null;
+    render();
+  }
   function setAuthMessage(message){document.getElementById('authFeedback').textContent=message;}
-  function setGate(visible){document.getElementById('authGate').hidden=!visible; document.getElementById('classrollShell').hidden=visible;}
+  function setGate(visible){document.getElementById('authGate').hidden=!visible;document.getElementById('classrollShell').hidden=visible;}
+  function saveStatus(message){document.getElementById('saveStatus').textContent=message;}
+  function normalData(data){return data&&typeof data==='object'?data:blankState();}
+  async function showOfflineRecord(){
+    if(!cloudUser)return false;
+    try {
+      const cached=await ClassRollOffline.read(cloudUser.id);
+      if(!cached?.approved||!cached?.data)return false;
+      resetWorkingState(cached.data);
+      document.getElementById('accountEmail').textContent=cloudUser.email||cached.email||'Teacher';
+      cloudReady=true;setGate(false);
+      document.getElementById('adminNav').hidden=true;
+      saveStatus(cached.dirty?'Saved locally — waiting to sync':'Offline — saved records available');
+      return true;
+    } catch(error){saveStatus('Offline storage error: '+error.message);return false;}
+  }
+  // Save every edit on this device first, even when the internet is down.
   function queueCloudSave(){
     if(!cloudReady||!cloudUser)return;
     changeCounter++;
-    document.getElementById('saveStatus').textContent='Saving…';
+    const owner=cloudUser.id,email=cloudUser.email,snapshot=JSON.parse(JSON.stringify(state));
+    saveStatus('Saving on this device…');
+    offlineWriteChain=offlineWriteChain.then(async()=>{
+      const old=await ClassRollOffline.read(owner);
+      await ClassRollOffline.write({userId:owner,email,approved:true,data:snapshot,
+        baseData:old?.baseData??null,dirty:true});
+      saveStatus(navigator.onLine?'Saved locally — syncing…':'Saved offline — waiting to sync');
+    }).catch(error=>saveStatus('Offline save failed: '+error.message));
     clearTimeout(saveTimer);
-    saveTimer=setTimeout(()=>{
-      const snapshot=JSON.parse(JSON.stringify(state)); const owner=cloudUser.id; const version=changeCounter;
-      saveChain=saveChain.then(async()=>{
-        if(!cloudReady||cloudUser?.id!==owner)return;
-        const {error}=await cloudClient.from('teacher_data').upsert({teacher_id:owner, data:snapshot},{onConflict:'teacher_id'});
-        if(error){document.getElementById('saveStatus').textContent='Save failed — '+error.message;return;}
-        if(version===changeCounter)document.getElementById('saveStatus').textContent='Saved in cloud';
-      }).catch(error=>{document.getElementById('saveStatus').textContent='Save failed — '+error.message;});
-    },350);
+    saveTimer=setTimeout(()=>{if(navigator.onLine)void syncOfflineChanges();},800);
+  }
+  async function syncOfflineChanges(force=false){
+    if(!cloudReady||!cloudUser||!navigator.onLine||syncBusy)return;
+    syncBusy=true;
+    const owner=cloudUser.id,version=changeCounter;
+    try{
+      await offlineWriteChain;
+      const cached=await ClassRollOffline.read(owner);
+      if(!cached?.dirty){saveStatus('Saved in cloud · offline ready');return;}
+      saveStatus('Syncing with cloud…');
+      const {data:profile,error:profileError}=await cloudClient.from('teacher_profiles').select('approved').eq('id',owner).maybeSingle();
+      if(profileError)throw profileError;
+      if(!profile?.approved){
+        cloudReady=false;setGate(true);setAuthMessage('This account is no longer approved. Internet access is required.');
+        return;
+      }
+      const {data:remote,error:readError}=await cloudClient.from('teacher_data').select('data').eq('teacher_id',owner).maybeSingle();
+      if(readError)throw readError;
+      const serverData=normalData(remote?.data);
+      if(!force&&cached.baseData!==null&&JSON.stringify(serverData)!==JSON.stringify(cached.baseData)){
+        syncConflict=true;saveStatus('Sync conflict — click Sync now to review');
+        return;
+      }
+      const snapshot=cached.data;
+      const {error:writeError}=await cloudClient.from('teacher_data').upsert({teacher_id:owner,data:snapshot},{onConflict:'teacher_id'});
+      if(writeError)throw writeError;
+      const {data:confirmed,error:confirmError}=await cloudClient.from('teacher_data').select('data').eq('teacher_id',owner).maybeSingle();
+      if(confirmError)throw confirmError;
+      const latest=await ClassRollOffline.read(owner);
+      const unchanged=changeCounter===version&&JSON.stringify(latest?.data)===JSON.stringify(snapshot);
+      await ClassRollOffline.write({...latest,baseData:normalData(confirmed?.data),dirty:!unchanged});
+      syncConflict=false;
+      saveStatus(unchanged?'Saved in cloud · offline ready':'New edits pending sync');
+      if(!unchanged)setTimeout(()=>void syncOfflineChanges(),600);
+    }catch(error){saveStatus('Saved locally — sync failed: '+(error.message||error));}
+    finally{syncBusy=false;}
   }
   async function refreshAccess(){
     if(!cloudUser)return;
-    setGate(true);
-    setAuthMessage('Checking account approval…');
-    const {data:profile,error}=await cloudClient.from('teacher_profiles').select('approved,review_status').eq('id',cloudUser.id).maybeSingle();
-    if(error){setAuthMessage('Could not check account: '+error.message);return;}
-    if(!profile){setAuthMessage('Your profile is being created. Check again shortly.');document.getElementById('pendingActions').hidden=false;return;}
-    if(!profile.approved){setAuthMessage(profile.review_status==='rejected'?'Your account request was not approved. Contact your school administrator.':'Your teacher account is awaiting administrator approval. You cannot access classroom records yet.');document.getElementById('authForm').hidden=true;document.getElementById('authToggle').hidden=true;document.getElementById('authReset').hidden=true;document.getElementById('pendingActions').hidden=false;return;}
-    const {data:record,error:loadError}=await cloudClient.from('teacher_data').select('data').eq('teacher_id',cloudUser.id).maybeSingle();
-    if(loadError){setAuthMessage('Cannot load your sections: '+loadError.message);return;}
-    resetWorkingState(record?.data);
-    document.getElementById('accountEmail').textContent=cloudUser.email||'Teacher';
-    cloudReady=true;setGate(false);await refreshAdminEligibility();
-    document.getElementById('saveStatus').textContent='Saved in cloud';
+    setGate(true);setAuthMessage('Checking account approval…');
+    if(!navigator.onLine){
+      if(!await showOfflineRecord())setAuthMessage('Offline access requires signing in and opening this classroom online first.');
+      return;
+    }
+    let profile;
+    try{
+      const {data,error}=await cloudClient.from('teacher_profiles').select('approved,review_status').eq('id',cloudUser.id).maybeSingle();
+      if(error)throw error;
+      profile=data;
+    }catch(error){
+      if(!await showOfflineRecord())setAuthMessage('Account check failed: '+error.message);
+      return;
+    }
+    if(!profile){setAuthMessage('Your teacher profile is being created. Try again shortly.');document.getElementById('pendingActions').hidden=false;return;}
+    if(!profile.approved){
+      setAuthMessage(profile.review_status==='rejected'?'Your account request was not approved. Contact your administrator.':'Your teacher account is awaiting administrator approval.');
+      document.getElementById('authForm').hidden=true;document.getElementById('authToggle').hidden=true;
+      document.getElementById('authReset').hidden=true;document.getElementById('pendingActions').hidden=false;return;
+    }
+    try{
+      const {data:record,error}=await cloudClient.from('teacher_data').select('data').eq('teacher_id',cloudUser.id).maybeSingle();
+      if(error)throw error;
+      const serverData=normalData(record?.data);
+      const cached=await ClassRollOffline.read(cloudUser.id);
+      if(cached?.dirty){
+        resetWorkingState(cached.data);
+      }else{
+        resetWorkingState(serverData);
+        await ClassRollOffline.write({userId:cloudUser.id,email:cloudUser.email,
+          approved:true,data:serverData,baseData:serverData,dirty:false});
+      }
+      document.getElementById('accountEmail').textContent=cloudUser.email||'Teacher';
+      cloudReady=true;setGate(false);await refreshAdminEligibility();
+      if(cached?.dirty)await syncOfflineChanges();
+      else saveStatus('Saved in cloud · offline ready');
+    }catch(error){
+      if(!await showOfflineRecord())setAuthMessage('Cannot load classroom: '+error.message);
+    }
   }
   async function initializeSession(){
-    const {data:{session},error}=await cloudClient.auth.getSession();
-    if(error){setAuthMessage(error.message);return;}
-    cloudUser=session?.user||null;
-    if(cloudUser)await refreshAccess();else{cloudReady=false;setGate(true);showLogin();}
+    try{
+      const {data:{session},error}=await cloudClient.auth.getSession();
+      if(error)throw error;
+      cloudUser=session?.user||null;
+      if(cloudUser)await refreshAccess();else{cloudReady=false;setGate(true);showLogin();}
+    }catch(error){
+      if(!await showOfflineRecord())setAuthMessage('Sign in online once before using offline mode: '+error.message);
+    }
   }
   function showLogin(){
     document.getElementById('authForm').hidden=false;
