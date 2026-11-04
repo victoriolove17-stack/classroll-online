@@ -1,6 +1,6 @@
 /* Cache only public application files, never Supabase data/API responses. */
-const CACHE='classroll-pwa-v1';
-const APP=['/','/index.html','/config.js','/offline-store.js','/manifest.webmanifest','/icon.svg'];
+const CACHE='classroll-pwa-v2';
+const APP=['/','/index.html','/config.js','/offline-store.js','/manifest.webmanifest','/icon.svg','/icon-192.png','/icon-512.png'];
 const SDK='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
 self.addEventListener('install',event=>{
   event.waitUntil((async()=>{
