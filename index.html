@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#3978d9">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>ClassRoll — Attendance made simple</title>
   <style>
     :root { --ink:#243449; --muted:#65768a; --paper:#fffdf8; --mint:#e4f6ee; --blue:#3978d9; --blue-soft:#eaf2ff; --yellow:#fff2bd; --coral:#ffe4dc; --line:#dfe8ed; --green:#1d9262; --orange:#d97b28; --red:#d55353; --shadow:0 14px 32px rgba(45,70,91,.12); }
@@ -58,6 +62,9 @@
     #pendingActions { display:flex; flex-wrap:wrap; gap:9px; margin-top:18px; }
     .online-account { padding:8px; display:grid; gap:7px; overflow-wrap:anywhere; color:var(--muted); font-size:.78rem; }
     .online-account button { justify-self:start; }
+    .offline-controls {padding:10px 8px;display:grid;gap:8px;}
+    .offline-controls button {width:100%;text-align:left;}
+    #offlineNotice {font-size:.78rem;color:var(--muted);line-height:1.4;}
 
     /* Administrator review panel — teacher account permissions are enforced by database RLS. */
     .admin-nav { width:100%; margin-top:10px; border:1px solid #bcd5f5; border-radius:13px; padding:12px; background:#edf5ff; color:#245fae; font-weight:850; text-align:left; }
@@ -108,7 +115,7 @@
 </section>
 <div class="shell" id="classrollShell" hidden>
     <aside class="sidebar">
-      <div class="brand"><span class="brand-mark">📘</span>ClassRoll Online</div><div class="online-account"><span id="accountEmail"></span><button class="secondary" id="signOutButton" type="button">Sign out</button><span id="saveStatus" aria-live="polite">Saved in cloud</span></div>
+      <div class="brand"><span class="brand-mark">📘</span>ClassRoll Online</div><div class="online-account"><span id="accountEmail"></span><button class="secondary" id="signOutButton" type="button">Sign out</button><span id="saveStatus" aria-live="polite">Checking connection…</span></div><div class="offline-controls"><button class="secondary" id="installApp" type="button">⬇️ Install ClassRoll App</button><button class="secondary" id="syncNow" type="button">☁️ Sync now</button><span id="offlineNotice">Install while online. Sign in online once to enable offline records.</span></div>
       <div class="sidebar-label"><span>My sections</span><span id="sectionCount">0</span></div>
       <div class="section-list" id="sectionList"></div>
       <button class="add-section" id="addSectionButton">＋ Add a section</button>
@@ -145,6 +152,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
+  <script src="offline-store.js"></script>
   <script>
     const storageKey='classroll-data-v1';
     const avatarChoices=[
