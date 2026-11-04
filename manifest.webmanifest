@@ -1,0 +1,19 @@
+{
+  "id": "/",
+  "name": "ClassRoll Online",
+  "short_name": "ClassRoll",
+  "description": "Attendance, reward stars, student records and class tools — online or offline.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#eff5f5",
+  "theme_color": "#3978d9",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
