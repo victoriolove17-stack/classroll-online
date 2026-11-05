@@ -64,6 +64,16 @@
     .online-account { padding:8px; display:grid; gap:7px; overflow-wrap:anywhere; color:var(--muted); font-size:.78rem; }
     .online-account button { justify-self:start; }
     .offline-controls {padding:10px 8px;display:grid;gap:8px;}
+    .import-dialog {width:min(96vw,660px);}
+    .import-dialog .modal {max-height:85vh;overflow:auto;}
+    .import-dialog input[type=file] {max-width:100%;}
+    .import-preview {margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;max-height:260px;overflow:auto;background:#f8fbfd;}
+    .import-preview ol {margin:8px 0 0;padding-left:24px;}
+    .import-preview li {padding:3px 0;}
+    .import-preview .skipped {color:#93643c;}
+    .import-help {font-size:.85rem;color:var(--muted);line-height:1.5;}
+    .import-dialog textarea {width:100%;min-height:90px;border:1px solid var(--line);border-radius:10px;padding:11px;font:inherit;}
+    .import-feedback {font-size:.85rem;font-weight:700;color:var(--muted);min-height:1.2em;}
     .offline-controls button {width:100%;text-align:left;}
     #offlineNotice {font-size:.78rem;color:var(--muted);line-height:1.4;}
 
@@ -132,7 +142,7 @@
       <div id="emptyState" class="empty"><div><div class="empty-icon">🧑‍🏫</div><h2>Ready to take attendance?</h2><p>Create your first class section, add the children you teach, and choose a picture icon for each learner.</p><button class="primary" id="emptyAddSection">Create my first section</button></div></div>
       <section id="attendanceApp" hidden>
         <div class="topbar"><div><p class="eyebrow">Attendance register</p><h1 id="sectionTitle">My section</h1></div><label class="date-field">📅 <input type="date" id="attendanceDate" aria-label="Attendance date"></label></div>
-        <div class="controls"><button class="primary" id="addStudentButton">＋ Add a child</button><button class="secondary" id="markAllPresent">Mark everyone present</button><button class="secondary" id="raffleButton">🎲 Raffle a name</button><button class="secondary" id="starHistoryButton">⭐ Star history</button><button class="secondary" id="downloadButton">⇩ Download record</button></div>
+        <div class="controls"><button class="primary" id="addStudentButton">＋ Add a child</button><button class="secondary" id="importStudentsButton" type="button">📋 Upload student list</button><button class="secondary" id="markAllPresent">Mark everyone present</button><button class="secondary" id="raffleButton">🎲 Raffle a name</button><button class="secondary" id="starHistoryButton">⭐ Star history</button><button class="secondary" id="downloadButton">⇩ Download record</button></div>
         <div class="stats"><div class="stat"><b id="totalCount">0</b><small>Children</small></div><div class="stat present"><b id="presentCount">0</b><small>Present</small></div><div class="stat late"><b id="lateCount">0</b><small>Late</small></div><div class="stat absent"><b id="absentCount">0</b><small>Absent</small></div></div>
         <div class="register"><div class="register-head"><div><h2>Today’s class</h2><p>Marking Present or Late gives one daily reward star. Daily stars reset on a new date.</p></div><button class="secondary" id="renameSection">Rename/Delete section</button></div><div class="student-search-bar"><div class="student-search-field"><span class="search-icon" aria-hidden="true">🔎</span><input id="studentSearch" type="search" placeholder="Search student name..." aria-label="Search students by name" autocomplete="off"><button id="clearStudentSearch" class="clear-search" type="button" aria-label="Clear student search" hidden>×</button></div><span id="searchCount" class="search-count" aria-live="polite"></span></div><div id="studentList"></div></div>
       </section>
@@ -153,6 +163,17 @@
 
   <dialog id="sectionDialog"><form method="dialog" class="modal" id="sectionForm"><h2 id="sectionDialogTitle">Add a section</h2><p>For example: Grade 2 – Sampaguita or Reading Group A.</p><div class="form-grid"><label>Section name<input type="text" id="sectionNameInput" maxlength="50" required placeholder="e.g. Grade 3 – Mabini"></label><div class="error" id="sectionError"></div></div><div class="modal-actions"><button class="secondary" type="button" id="deleteSectionButton" hidden>🗑️ Delete section</button><button class="secondary" type="button" data-close-dialog>Cancel</button><button class="primary" value="default" id="saveSection">Save section</button></div></form></dialog>
   <dialog id="studentDialog"><form method="dialog" class="modal" id="studentForm"><h2 id="studentDialogTitle">Add a child</h2><p id="studentDialogText">Choose a picture icon so you can recognise each learner quickly.</p><div class="form-grid"><label>Child’s name<input type="text" id="studentNameInput" maxlength="50" required placeholder="e.g. Ana"></label><div><label>Choose a picture icon</label><div class="icon-grid" id="iconGrid"></div></div><div class="error" id="studentError"></div></div><div class="modal-actions"><button class="secondary" type="button" id="deleteStudent" hidden>Delete profile</button><button class="secondary" type="button" data-close-dialog>Cancel</button><button class="primary" value="default" id="saveStudent">Add child</button></div></form></dialog>
+  <dialog id="importStudentsDialog" class="import-dialog"><div class="modal">
+    <h2>📋 Upload Student List</h2>
+    <p class="import-help">Import names into <strong id="importSectionName"></strong>. Upload a .csv or .txt file, or paste one name per line. For Excel, use Save As → CSV (UTF-8). You can also use a CSV column called Student Name, Learner Name, Full Name, or Name.</p>
+    <label>Choose student list file (.csv or .txt)<input id="studentListFile" type="file" accept=".csv,.txt,text/csv,text/plain"></label>
+    <p class="import-help">Or paste names below (one student per line):</p>
+    <textarea id="studentListPaste" placeholder="Juan Dela Cruz&#10;Maria Santos&#10;Ana Reyes" aria-label="Student names, one per line"></textarea>
+    <div class="modal-actions"><button class="secondary" id="previewStudentsButton" type="button">Preview names</button></div>
+    <div id="studentImportFeedback" class="import-feedback" role="status" aria-live="polite"></div>
+    <div id="studentImportPreview" class="import-preview" hidden></div>
+    <div class="modal-actions"><button class="secondary" id="cancelStudentImport" type="button">Cancel</button><button class="primary" id="confirmStudentImport" type="button" disabled>Add students to section</button></div>
+  </div></dialog>
   <dialog id="raffleDialog"><div class="modal"><h2>Recitation raffle</h2><p id="raffleMessage">Only children marked Present today are included.</p><div id="raffleResult" aria-live="polite" style="min-height:76px;display:grid;place-items:center;padding:12px;border-radius:16px;background:#edf6ff;color:#205cba;font-size:1.45rem;font-weight:900;text-align:center">Ready to draw</div><div class="raffle-reward-actions" id="raffleRewardActions" hidden><button class="star-button" type="button" id="raffleAddStar">⭐ Award star</button><button class="star-button remove" type="button" id="raffleRemoveStar">Remove star</button></div><div class="modal-actions"><button class="secondary" type="button" id="resetRaffle">Start over</button><button class="secondary" type="button" id="closeRaffle">Close</button><button class="primary" type="button" id="drawRaffle">Draw a name</button></div></div></dialog>
   <dialog id="starHistoryDialog"><div class="modal"><h2>Daily star history</h2><p>See how many stars each student has earned across daily lessons. Individual daily records remain below.</p><div id="starTotals" class="star-totals" aria-live="polite"></div><h3>Daily star history</h3><div id="starHistoryList" class="star-history-list"></div><div class="modal-actions"><button class="secondary" type="button" id="closeStarHistory">Close</button></div></div></dialog>
 
@@ -226,6 +247,111 @@
     function saveSection(event){event.preventDefault();const name=$('sectionNameInput').value.trim();if(!name){$('sectionError').textContent='Please enter a section name.';return;}if(editingSectionId){state.sections.find(section=>section.id===editingSectionId).name=name;}else{const section={id:uid(),name,color:palette[state.sections.length%palette.length],children:[]};state.sections.push(section);state.selectedSectionId=section.id;}persist();$('sectionDialog').close();render();}
     function renderIcons(){const grid=$('iconGrid');grid.innerHTML='';['boy','girl'].forEach(group=>{const label=document.createElement('div');label.className='icon-group-label';label.textContent=group==='boy'?'Boys':'Girls';grid.appendChild(label);avatarChoices.filter(avatar=>avatar.classes.includes(group)).forEach(avatar=>{const button=document.createElement('button');button.type='button';button.className=`icon-choice ${avatar.id===selectedIcon?'selected':''}`;button.innerHTML=avatarMarkup(avatar.id);button.setAttribute('aria-label',`Choose ${avatar.label}`);button.setAttribute('aria-pressed',String(avatar.id===selectedIcon));button.onclick=()=>{selectedIcon=avatar.id;renderIcons();};grid.appendChild(button);});});}
     function openStudentDialog(child){editingStudentId=child?.id||null;$('studentDialogTitle').textContent=child?'Edit child profile':'Add a child';$('studentDialogText').textContent=child?'Change the child’s name or choose a different cartoon picture icon.':'Choose a picture icon so you can recognise each learner quickly.';$('saveStudent').textContent=child?'Save changes':'Add child';$('deleteStudent').hidden=!child;$('studentNameInput').value=child?.name||'';$('studentError').textContent='';selectedIcon=child?.icon||avatarChoices[0].id;renderIcons();$('studentDialog').showModal();$('studentNameInput').focus();}
+    // Import student names without changing existing children or section records.
+    let studentImportNames=[], studentImportSectionId=null;
+    function parseStudentCsv(text){
+      const rows=[];let row=[],cell='',quoted=false;
+      text=text.replace(/^\uFEFF/,'');
+      for(let i=0;i<text.length;i++){
+        const ch=text[i];
+        if(ch==='"'){
+          if(quoted&&text[i+1]==='"'){cell+='"';i++;}
+          else quoted=!quoted;
+        }else if(ch===','&&!quoted){row.push(cell);cell='';}
+        else if((ch==='\r'||ch==='\n')&&!quoted){
+          if(ch==='\r'&&text[i+1]==='\n')i++;
+          row.push(cell);if(row.some(part=>part.trim()))rows.push(row);
+          row=[];cell='';
+        }else cell+=ch;
+      }
+      if(quoted)throw new Error('CSV has an unclosed quotation mark.');
+      row.push(cell);if(row.some(part=>part.trim()))rows.push(row);
+      return rows;
+    }
+    function normalizeImportName(name){return String(name||'').replace(/\s+/g,' ').trim();}
+    function getStudentImportNames(text,isCsv){
+      if(!isCsv)return text.split(/\r?\n/).map(normalizeImportName).filter(Boolean);
+      const rows=parseStudentCsv(text);
+      if(!rows.length)return [];
+      const headers=rows[0].map(header=>header.trim().toLocaleLowerCase().replace(/[_-]/g,' '));
+      const find=(names)=>headers.findIndex(h=>names.includes(h));
+      const nameIndex=find(['student name','learner name','full name','name','student','learner']);
+      if(nameIndex>=0)return rows.slice(1).map(row=>normalizeImportName(row[nameIndex])).filter(Boolean);
+      const last=find(['last name','lastname','surname']),first=find(['first name','firstname','given name']);
+      const middle=find(['middle name','middlename']);
+      if(last>=0&&first>=0)return rows.slice(1).map(row=>normalizeImportName([row[first],row[middle],row[last]].filter(Boolean).join(' '))).filter(Boolean);
+      // A one-column CSV can be a simple list with or without the Name header.
+      if(rows.every(row=>row.length===1))return rows.map(row=>normalizeImportName(row[0])).filter((name,index)=>index>0||!['name','student name','learner name','full name'].includes(name.toLocaleLowerCase()));
+      throw new Error('No name column found. Add a Student Name column, or use one name per line in a .txt file.');
+    }
+    function openStudentImport(){
+      const section=currentSection();if(!section)return;
+      studentImportSectionId=section.id;studentImportNames=[];
+      $('importSectionName').textContent=section.name;
+      $('studentListFile').value='';$('studentListPaste').value='';
+      $('studentImportFeedback').textContent='';
+      $('studentImportPreview').hidden=true;$('studentImportPreview').replaceChildren();
+      $('confirmStudentImport').disabled=true;
+      $('importStudentsDialog').showModal();
+    }
+    async function previewStudentImport(){
+      const section=currentSection();
+      if(!section||section.id!==studentImportSectionId){$('studentImportFeedback').textContent='Select the original section and try again.';return;}
+      $('confirmStudentImport').disabled=true;studentImportNames=[];
+      try{
+        const file=$('studentListFile').files[0],pasted=$('studentListPaste').value.trim();
+        let content,isCsv=false;
+        if(file){
+          if(file.size>1024*1024)throw new Error('File is too large. Please use a file under 1 MB.');
+          if(!/\.(csv|txt)$/i.test(file.name))throw new Error('Please upload a .csv or .txt file.');
+          content=await file.text();isCsv=/\.csv$/i.test(file.name);
+        }else if(pasted){content=pasted;}
+        else throw new Error('Choose a file or paste student names first.');
+        const names=getStudentImportNames(content,isCsv);
+        if(names.length>1000)throw new Error('Import up to 1,000 students at a time.');
+        const existing=new Set(section.children.map(child=>normalizeImportName(child.name).toLocaleLowerCase()));
+        const seen=new Set(),skipped=[];
+        for(const name of names){
+          const key=name.toLocaleLowerCase();
+          if(!name||name.length>50){skipped.push((name||'(blank)')+' — over 50 characters');continue;}
+          if(existing.has(key)||seen.has(key)){skipped.push(name+' — already in section or repeated');continue;}
+          seen.add(key);studentImportNames.push(name);
+        }
+        const preview=$('studentImportPreview');preview.replaceChildren();preview.hidden=false;
+        const summary=document.createElement('strong');
+        summary.textContent=studentImportNames.length+' new student(s) ready to add · '+skipped.length+' skipped';
+        preview.appendChild(summary);
+        const list=document.createElement('ol');
+        for(const name of studentImportNames.slice(0,200)){const item=document.createElement('li');item.textContent=name;list.appendChild(item);}
+        if(studentImportNames.length>200){const note=document.createElement('p');note.textContent='Preview shows the first 200 names.';preview.appendChild(note);}
+        preview.appendChild(list);
+        if(skipped.length){const note=document.createElement('p');note.className='skipped';note.textContent='Skipped: '+skipped.slice(0,12).join('; ')+(skipped.length>12?'…':'');preview.appendChild(note);}
+        $('studentImportFeedback').textContent=studentImportNames.length?'Review the names before importing.':'No new names to add.';
+        $('confirmStudentImport').disabled=!studentImportNames.length;
+      }catch(error){$('studentImportFeedback').textContent=error.message||String(error);$('studentImportPreview').hidden=true;}
+    }
+    function confirmStudentImport(){
+      const section=currentSection();
+      if(!section||section.id!==studentImportSectionId){$('studentImportFeedback').textContent='Section changed; reopen student import.';return;}
+      if(!studentImportNames.length)return;
+      const existing=new Set(section.children.map(child=>normalizeImportName(child.name).toLocaleLowerCase()));
+      let added=0;
+      for(const name of studentImportNames){
+        const key=name.toLocaleLowerCase();
+        if(existing.has(key))continue;
+        section.children.push({id:uid(),name,icon:avatarChoices[0].id});
+        existing.add(key);added++;
+      }
+      studentImportNames=[];
+      persist();renderRegister();$('importStudentsDialog').close();
+      alert(added+' student(s) added to '+section.name+'. Their records will save locally and sync with the cloud when connected.');
+    }
+    $('importStudentsButton').onclick=openStudentImport;
+    $('previewStudentsButton').onclick=previewStudentImport;
+    $('confirmStudentImport').onclick=confirmStudentImport;
+    $('cancelStudentImport').onclick=()=>$('importStudentsDialog').close();
+    $('studentListFile').addEventListener('change',()=>{$('confirmStudentImport').disabled=true;studentImportNames=[];$('studentImportFeedback').textContent='Click Preview names to review the file.';});
+    $('studentListPaste').addEventListener('input',()=>{$('confirmStudentImport').disabled=true;studentImportNames=[];});
     function saveStudent(event){event.preventDefault();const name=$('studentNameInput').value.trim();if(!name){$('studentError').textContent='Please enter the child’s name.';return;}if(editingStudentId){const child=currentSection().children.find(item=>item.id===editingStudentId);child.name=name;child.icon=selectedIcon;}else{currentSection().children.push({id:uid(),name,icon:selectedIcon});}persist();$('studentDialog').close();renderRegister();}
     function deleteStudent(){const child=currentSection().children.find(item=>item.id===editingStudentId);if(!child||!confirm(`Delete ${child.name}'s profile and all of this child's saved attendance marks?`))return;currentSection().children=currentSection().children.filter(item=>item.id!==editingStudentId);Object.values(state.attendance).forEach(records=>delete records[editingStudentId]);Object.values(state.attendanceStarRewards).forEach(rewards=>delete rewards[editingStudentId]);Object.values(state.raffleDraws).forEach(draws=>{const index=draws.indexOf(editingStudentId);if(index>-1)draws.splice(index,1);});persist();$('studentDialog').close();renderRegister();}
     function renderRaffle(){const present=presentChildren();const key=attendanceKey();const drawn=state.raffleDraws[key]||[];const remaining=present.filter(child=>!drawn.includes(child.id));const hasPresent=present.length>0;$('raffleMessage').textContent=!hasPresent?'Mark at least one child Present before drawing.':remaining.length?`${remaining.length} of ${present.length} present learner${present.length===1?'':'s'} still available.`:'Everyone marked Present has had a turn.';$('drawRaffle').disabled=!remaining.length;$('resetRaffle').hidden=!drawn.length;}
